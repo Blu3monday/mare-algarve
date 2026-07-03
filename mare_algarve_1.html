@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Maré">
+<meta name="theme-color" content="#123B41">
+<title>Maré · Algarve 2026</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12333A; --lagoon:#17565C; --lagoon-deep:#0E3F45; --lagoon-mist:#DDEAE8;
+  --sand:#F4EDE0; --paper:#FDFAF3; --line:#E4DACA; --muted:#66787A;
+  --clay:#BE5F3B; --clay-soft:#F3DED2; --gold:#DFA050; --gold-soft:#F7E8CF;
+  --ok:#2F7D5A; --warn:#B0413E; --warn-soft:#F5DEDD;
+  --c-plage:#2C7DA0; --c-nature:#3E7C4F; --c-resto:#BE5F3B; --c-cafe:#A9752F;
+  --c-bar:#7A4E8C; --c-culture:#8A5E2B; --c-village:#C98A2D; --c-pdv:#DFA050;
+  --c-shopping:#B04E6E; --c-activite:#1F8A70; --c-vignoble:#7E3F5D; --c-base:#12333A;
+  --r:14px; --shadow:0 6px 24px rgba(18,51,58,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Outfit',system-ui,-apple-system,sans-serif;background:var(--sand);color:var(--ink);
+  min-height:100dvh;overscroll-behavior-y:none}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit}
+input,textarea{font-family:inherit;font-size:1rem}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+header{position:sticky;top:0;z-index:900;background:var(--lagoon-deep);color:var(--paper);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 0}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.7rem;letter-spacing:.01em}
+.brand small{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;opacity:.75}
+.offline-dot{margin-left:auto;font-size:.7rem;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.14);display:none}
+.offline-dot.show{display:inline-block}
+.marebar{margin:10px -16px 0;padding:9px 16px calc(9px);display:flex;gap:14px;align-items:center;
+  font-size:.8rem;color:#0E2F34;
+  background:linear-gradient(90deg,#BFDCD6 0%,#E9D9B8 55%,#EEC08A 100%)}
+.marebar .mb-item{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.marebar b{font-weight:600}
+.marebar a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.marebar .wave{margin-left:auto;opacity:.55;flex:0 0 auto}
+
+main{padding:14px 14px calc(84px + env(safe-area-inset-bottom));max-width:680px;margin:0 auto}
+.view{display:none;animation:fadeIn .22s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:950;background:var(--paper);
+  border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;padding:9px 2px 7px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:.63rem;font-weight:500;color:var(--muted);letter-spacing:.02em}
+nav.tabs button .ic{font-size:1.25rem;line-height:1}
+nav.tabs button.active{color:var(--lagoon)}
+nav.tabs button.active .ic{transform:translateY(-1px)}
+nav.tabs button.active::after{content:'';width:18px;height:3px;border-radius:3px;background:var(--clay);margin-top:2px}
+
+h2.sec{font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;margin:20px 2px 10px;display:flex;align-items:center;gap:8px}
+h2.sec:first-child{margin-top:2px}
+h2.sec .n{font-size:.72rem;font-family:'Outfit';font-weight:600;color:var(--muted);background:var(--paper);
+  border:1px solid var(--line);padding:1px 8px;border-radius:99px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.place-row{display:flex;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);align-items:center;width:100%;text-align:left}
+.place-row:last-child{border-bottom:none}
+.place-row .dot{flex:0 0 12px;width:12px;height:12px;border-radius:50%;margin-top:2px}
+.place-row .pr-main{flex:1;min-width:0}
+.place-row .pr-name{font-weight:600;font-size:.95rem;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.place-row .pr-sub{font-size:.78rem;color:var(--muted);margin-top:1px}
+.place-row .pr-dist{flex:0 0 auto;text-align:right;font-size:.8rem;font-weight:600;color:var(--lagoon)}
+.place-row .pr-dist small{display:block;font-weight:400;color:var(--muted);font-size:.68rem}
+.badge{font-size:.62rem;font-weight:600;padding:2px 7px;border-radius:99px;letter-spacing:.03em}
+.badge.inc{background:var(--gold-soft);color:#8a5f16}
+.badge.closed{background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:#DDEEE4;color:var(--ok)}
+.badge.ferme{background:var(--warn);color:#fff}
+.badge.pin{background:var(--clay-soft);color:var(--clay)}
+.badge.resa{background:var(--lagoon-mist);color:var(--lagoon)}
+.empty{padding:26px 18px;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.5}
+
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.quick button{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:13px 6px 11px;display:flex;flex-direction:column;align-items:center;gap:5px;
+  font-size:.74rem;font-weight:600;box-shadow:var(--shadow);transition:transform .1s}
+.quick button:active{transform:scale(.96)}
+.quick button .qi{font-size:1.5rem}
+.quick button.util{background:var(--lagoon-mist);border-color:#C7DBD8}
+.factcard{margin-top:16px;padding:14px 16px;border-radius:var(--r);background:var(--lagoon-deep);color:var(--paper);
+  font-size:.86rem;line-height:1.55;position:relative;overflow:hidden}
+.factcard::before{content:'✺';position:absolute;right:-8px;top:-16px;font-size:5rem;opacity:.08}
+.factcard .f-tag{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600;display:block;margin-bottom:5px}
+.pinstrip .place-row{background:linear-gradient(0deg,rgba(190,95,59,.05),rgba(190,95,59,.05))}
+.daybanner{display:flex;gap:10px;align-items:center;padding:10px 14px;font-size:.8rem;background:var(--gold-soft);
+  border:1px solid #EAD3A8;border-radius:var(--r);margin-bottom:12px}
+.daybanner button{font-weight:600;color:var(--clay);text-decoration:underline;text-underline-offset:2px}
+
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:6px 13px;border-radius:99px;background:var(--paper);border:1px solid var(--line);
+  font-size:.78rem;font-weight:500;white-space:nowrap}
+.chip.on{background:var(--lagoon);border-color:var(--lagoon);color:#fff}
+
+#mapwrap{position:relative;height:calc(100dvh - 235px);min-height:340px;border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+#map{height:100%;width:100%;background:#DCE7E5}
+.locbtn{position:absolute;bottom:14px;right:12px;z-index:800;width:44px;height:44px;border-radius:50%;
+  background:var(--paper);box-shadow:var(--shadow);font-size:1.2rem;display:flex;align-items:center;justify-content:center}
+.leaflet-div-icon{background:none;border:none}
+.pin{width:26px;height:26px;border-radius:50% 50% 50% 4px;transform:rotate(-45deg);border:2.5px solid #fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}
+.pin span{transform:rotate(45deg);font-size:.68rem}
+.pin.home{width:30px;height:30px}
+.mylo{width:16px;height:16px;border-radius:50%;background:#2C7DA0;border:3px solid #fff;box-shadow:0 0 0 5px rgba(44,125,160,.25)}
+
+.search{display:flex;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;align-items:center;margin-bottom:6px}
+.search input{border:none;outline:none;flex:1;background:none;font-size:.95rem}
+.gscroll{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}
+.gscroll::-webkit-scrollbar{display:none}
+.gcard{flex:0 0 168px;background:var(--lagoon);color:var(--paper);border-radius:var(--r);padding:13px 13px 11px;text-align:left;
+  position:relative;overflow:hidden;min-height:96px;display:flex;flex-direction:column}
+.gcard:nth-child(3n+2){background:var(--clay)}
+.gcard:nth-child(3n){background:#3E6E63}
+.gcard .g-n{font-family:'Fraunces',serif;font-weight:600;font-size:.95rem;line-height:1.25}
+.gcard .g-z{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:4px}
+.gcard .g-c{margin-top:auto;font-size:.7rem;opacity:.85}
+.catgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.catgrid button{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.66rem;font-weight:500}
+.catgrid .ci{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff}
+
+.sheet-veil{position:fixed;inset:0;background:rgba(14,47,52,.45);z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+.sheet-veil.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:1001;background:var(--paper);border-radius:22px 22px 0 0;
+  max-height:88dvh;overflow-y:auto;transform:translateY(102%);transition:transform .26s cubic-bezier(.3,1,.4,1);
+  padding:10px 18px calc(22px + env(safe-area-inset-bottom))}
+.sheet.open{transform:none}
+.sheet .grip{width:40px;height:4px;border-radius:4px;background:var(--line);margin:2px auto 12px}
+.sh-cat{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;color:#fff}
+.sheet h3{font-family:'Fraunces',serif;font-size:1.45rem;font-weight:600;margin:9px 0 3px;line-height:1.15}
+.sh-sub{font-size:.8rem;color:var(--muted)}
+.sh-badges{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 2px}
+.sh-desc{font-size:.92rem;line-height:1.6;margin:12px 0 0}
+.sh-tip{margin-top:11px;padding:11px 13px;background:var(--gold-soft);border-radius:12px;font-size:.85rem;line-height:1.5}
+.sh-tip b{font-weight:600}
+.sh-fact{margin-top:9px;padding:11px 13px;background:var(--lagoon-mist);border-radius:12px;font-size:.83rem;line-height:1.5;font-style:italic}
+.sh-meta{margin-top:11px;font-size:.82rem;color:var(--muted);line-height:1.7}
+.sh-meta b{color:var(--ink);font-weight:600}
+.sh-check{margin-top:10px;padding:10px 13px;border-radius:12px;font-size:.82rem;line-height:1.5;background:var(--sand);border:1px dashed var(--line)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}
+.acts button,.acts a{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px;border-radius:12px;
+  font-size:.86rem;font-weight:600;text-decoration:none;border:1.5px solid var(--line);color:var(--ink);background:var(--paper)}
+.acts .go{grid-column:1/-1;background:var(--lagoon);border-color:var(--lagoon);color:#fff;font-size:.95rem}
+.acts button.on{background:var(--clay-soft);border-color:var(--clay);color:var(--clay)}
+.gomenu{display:none;grid-column:1/-1;grid-template-columns:repeat(3,1fr);gap:8px}
+.gomenu.open{display:grid}
+.gomenu a{padding:10px 4px;font-size:.78rem}
+.notebox{margin-top:13px}
+.notebox textarea{width:100%;min-height:64px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+  background:var(--sand);resize:vertical;font-size:.88rem}
+.notebox label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.ratebar{display:flex;gap:8px;margin-top:12px}
+.ratebar button{flex:1;padding:9px 4px;border-radius:12px;border:1.5px solid var(--line);font-size:.8rem;font-weight:600;background:var(--paper)}
+.ratebar button.on{background:var(--lagoon);color:#fff;border-color:var(--lagoon)}
+
+.chatbox{display:flex;flex-direction:column;height:calc(100dvh - 245px);min-height:330px}
+.msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:4px 2px 12px}
+.msg{max-width:86%;padding:11px 14px;border-radius:16px;font-size:.9rem;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{align-self:flex-end;background:var(--lagoon);color:#fff;border-bottom-right-radius:5px}
+.msg.bot{align-self:flex-start;background:var(--paper);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.bot .chip-place{display:inline-block;margin:3px 4px 1px 0;padding:4px 11px;border-radius:99px;background:var(--clay-soft);
+  color:var(--clay);font-size:.8rem;font-weight:600}
+.msg.think{align-self:flex-start;color:var(--muted);font-size:.8rem;font-style:italic;background:none;padding:2px 6px}
+.chatin{display:flex;gap:8px;padding-top:10px}
+.chatin textarea{flex:1;border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:var(--paper);
+  resize:none;max-height:110px;font-size:.92rem}
+.chatin button{width:48px;height:48px;border-radius:50%;background:var(--clay);color:#fff;font-size:1.15rem;flex:0 0 auto;align-self:flex-end}
+.chatin button:disabled{opacity:.45}
+.sugg{display:flex;gap:7px;overflow-x:auto;padding:6px 0 2px;scrollbar-width:none}
+.sugg::-webkit-scrollbar{display:none}
+.sugg button{flex:0 0 auto;font-size:.76rem;padding:7px 12px;border-radius:99px;background:var(--paper);border:1px solid var(--line)}
+
+.jentry{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;gap:11px;align-items:flex-start}
+.jentry:last-child{border:none}
+.jentry .je-emo{font-size:1.3rem;flex:0 0 auto}
+.jentry .je-d{font-size:.7rem;color:var(--muted)}
+.jentry .je-n{font-weight:600;font-size:.92rem}
+.jentry .je-note{font-size:.82rem;color:var(--muted);margin-top:2px;font-style:italic}
+details.acc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+details.acc summary{padding:13px 15px;font-weight:600;font-size:.9rem;cursor:pointer;list-style:none;display:flex;gap:9px;align-items:center}
+details.acc summary::after{content:'⌄';margin-left:auto;color:var(--muted);transition:transform .2s}
+details.acc[open] summary::after{transform:rotate(180deg)}
+details.acc .acc-b{padding:0 15px 14px;font-size:.86rem;line-height:1.65;color:#3c4f52}
+.toast{position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(16px);
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:.84rem;z-index:1200;opacity:0;
+  transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+.spin.dark{border-color:rgba(18,51,58,.25);border-top-color:var(--ink)}
+@keyframes sp{to{transform:rotate(360deg)}}
+.dayhero{background:linear-gradient(135deg,var(--lagoon-deep),#255E57 60%,#8A6B36);color:var(--paper);
+  border-radius:var(--r);padding:15px 16px 13px;margin-bottom:14px;box-shadow:var(--shadow)}
+.dayhero .dh-t{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;margin-bottom:3px}
+.dayhero .dh-s{font-size:.78rem;opacity:.85;line-height:1.45}
+.dayhero .dh-btns{display:flex;gap:8px;margin-top:11px}
+.dayhero .dh-btns button{flex:1;padding:10px 8px;border-radius:11px;font-weight:600;font-size:.84rem;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:var(--paper)}
+.dayhero .dh-btns button:active{background:rgba(255,255,255,.24)}
+.radar{margin-top:11px;padding-top:10px;border-top:1px dashed rgba(255,255,255,.25);font-size:.76rem;line-height:1.5}
+.radar b{color:var(--gold)}
+.radar .r-item{display:inline-block;margin:3px 5px 0 0;padding:3px 10px;border-radius:99px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);font-size:.73rem}
+.badge.done{background:#DDEEE4;color:var(--ok)}
+
+html{touch-action:manipulation}
+html,body{overflow-x:hidden;overscroll-behavior:none;max-width:100vw}
+.marebar{flex-wrap:wrap;row-gap:3px;column-gap:12px}
+.presszone{margin-top:10px}
+.presszone a{display:block;padding:9px 12px;margin-top:6px;border-radius:11px;background:var(--lagoon-mist);
+  color:var(--lagoon-deep);font-size:.82rem;font-weight:500;text-decoration:none;line-height:1.35}
+.presszone a small{display:block;font-weight:400;color:var(--muted);font-size:.7rem;margin-top:1px}
+@media(max-width:440px){
+  header{padding-left:13px;padding-right:13px}
+  .brand h1{font-size:1.38rem}.brand small{font-size:.56rem;letter-spacing:.09em}
+  .offline-dot{font-size:.62rem;padding:2px 7px}
+  .marebar{font-size:.71rem;padding:8px 13px;margin:9px -13px 0}
+  .marebar .wave{display:none}
+  main{padding:11px 10px calc(82px + env(safe-area-inset-bottom))}
+  h2.sec{font-size:1.02rem;margin:15px 2px 8px}
+  .quick{gap:7px}.quick button{padding:11px 3px 9px;font-size:.68rem;border-radius:12px}
+  .quick button .qi{font-size:1.28rem}
+  .dayhero{padding:13px 13px 11px}.dayhero .dh-t{font-size:.96rem}
+  .dayhero .dh-s{font-size:.73rem}.dayhero .dh-btns button{font-size:.79rem;padding:9px 5px}
+  .radar{font-size:.71rem}
+  .factcard{font-size:.81rem;padding:12px 13px}
+  .place-row{padding:10px 11px;gap:10px}.place-row .pr-name{font-size:.88rem}
+  .place-row .pr-sub{font-size:.73rem}.place-row .pr-dist{font-size:.74rem}
+  .gcard{flex-basis:148px;min-height:90px;padding:11px 11px 10px}.gcard .g-n{font-size:.86rem}
+  .catgrid{gap:7px}.catgrid button{font-size:.62rem;padding:9px 2px}
+  #mapwrap{height:calc(100dvh - 275px);min-height:300px}
+  .sheet{padding:9px 14px calc(20px + env(safe-area-inset-bottom))}
+  .sheet h3{font-size:1.28rem}.sh-desc{font-size:.88rem}
+  .acts{gap:8px}.acts button,.acts a{padding:11px 5px;font-size:.79rem}
+  .chatbox{height:calc(100dvh - 300px);min-height:290px}
+  .msg{font-size:.86rem;max-width:91%}
+  .sugg button{font-size:.72rem;padding:6px 10px}
+  nav.tabs button{font-size:.59rem;padding-top:8px}nav.tabs button .ic{font-size:1.18rem}
+  .toast{font-size:.78rem;max-width:94vw}
+}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <h1>Maré</h1><small>Algarve · Sophie &amp; Marine</small>
+    <span class="offline-dot" id="offdot">● hors ligne</span>
+  </div>
+  <div class="marebar" id="marebar">
+    <span class="mb-item" id="mb-day"><b>…</b></span>
+    <span class="mb-item" id="mb-sun">☀️ …</span>
+    <span class="mb-item">🌊 <a href="https://tabuademares.com/pt/faro/olhao" target="_blank" rel="noopener">Marées</a></span>
+    <svg class="wave" width="34" height="10" viewBox="0 0 34 10" fill="none"><path d="M1 5 Q5 1 9 5 T17 5 T25 5 T33 5" stroke="#0E2F34" stroke-width="1.6" stroke-linecap="round"/></svg>
+  </div>
+</header>
+
+<main>
+  <section class="view active" id="v-ici">
+    <div id="dayhero"></div>
+    <div id="daybanner"></div>
+    <div id="pinblock"></div>
+    <h2 class="sec">Autour de moi, maintenant</h2>
+    <div class="quick">
+      <button data-q="manger"><span class="qi">🍽️</span>Manger</button>
+      <button data-q="boire"><span class="qi">🍹</span>Boire</button>
+      <button data-q="plage"><span class="qi">🏖️</span>Plage &amp; balade</button>
+      <button data-q="pdv"><span class="qi">👁️</span>Point de vue</button>
+      <button data-q="shopping"><span class="qi">🛍️</span>Shopping</button>
+      <button data-q="culture"><span class="qi">🏛️</span>Culture</button>
+      <button class="util" data-u="essence"><span class="qi">⛽</span>Essence</button>
+      <button class="util" data-u="parking"><span class="qi">🅿️</span>Parking</button>
+      <button class="util" data-u="chat"><span class="qi">💬</span>Demander</button>
+    </div>
+    <div id="quicklist"></div>
+    <div class="factcard" id="factcard"></div>
+  </section>
+
+  <section class="view" id="v-carte">
+    <div class="chips" id="mapchips"></div>
+    <div id="mapwrap">
+      <div id="map"></div>
+      <button class="locbtn" id="locbtn" aria-label="Me localiser">🧭</button>
+    </div>
+  </section>
+
+  <section class="view" id="v-explorer">
+    <div class="search">🔎<input id="searchin" type="search" placeholder="Chercher un lieu, un plat, une envie…"></div>
+    <div id="searchres"></div>
+    <h2 class="sec">Les grappes <span class="n" id="gcount"></span></h2>
+    <div class="gscroll" id="grappes"></div>
+    <h2 class="sec">Par catégorie</h2>
+    <div class="catgrid" id="catgrid"></div>
+    <h2 class="sec">Les incontournables <span class="n" id="inccount"></span></h2>
+    <div class="card" id="inclist"></div>
+    <div id="explist"></div>
+  </section>
+
+  <section class="view" id="v-chat">
+    <div class="chatbox">
+      <div class="msgs" id="msgs"></div>
+      <div class="sugg" id="sugg">
+        <button>On a faim, on est où là ?</button>
+        <button>Idée pour ce soir ?</button>
+        <button>Demain : plage + bon déjeuner, max 1h de route</button>
+        <button>Un truc avec les amis de Carvoeiro</button>
+        <button>Il fait trop chaud, une idée à l'ombre ?</button>
+      </div>
+      <div class="chatin">
+        <textarea id="chatin" rows="1" placeholder="Une envie, une question…"></textarea>
+        <button id="chatsend" aria-label="Envoyer">➤</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-carnet">
+    <h2 class="sec">⭐ Nos favoris <span class="n" id="favcount"></span></h2>
+    <div class="card" id="favlist"></div>
+    <h2 class="sec">📓 Journal du séjour <span class="n" id="viscount"></span></h2>
+    <div class="card" id="vislist"></div>
+    <h2 class="sec">📞 À réserver</h2>
+    <div class="card" id="resalist"></div>
+    <h2 class="sec">🧰 Infos pratiques</h2>
+    <div id="infos"></div>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-v="ici" class="active"><span class="ic">🧭</span>Ici</button>
+  <button data-v="carte"><span class="ic">🗺️</span>Carte</button>
+  <button data-v="explorer"><span class="ic">✦</span>Explorer</button>
+  <button data-v="chat"><span class="ic">💬</span>Chat</button>
+  <button data-v="carnet"><span class="ic">📓</span>Carnet</button>
+</nav>
+
+<div class="sheet-veil" id="veil"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const DB = {"meta":{"destination":"Algarve & Alentejo Litoral, Portugal","voyage":{"arrivee":"2026-07-15T22:55","depart_aeroport":"2026-07-27T08:45","base":"Pure Formosa Concept Hotel, Olhão","base_coords":[37.0264,-7.8434],"vehicule":"FIAT 500 Diesel (lun→dim)","voyageurs":["Sophie","Marine"],"amis":"Carvoeiro (activités en journée)"},"gouts":["authentique","anti-foule","bonne bouffe","nature","culture","budget modéré"],"regle_route":"max ~2x2h de conduite par jour","sources":"Corpus projet Algarve_2026 (guides FR + blog résident local Blinking Flamingos + Maré Algarve)","extraction_date":"2026-07-02"},"grappes":[{"id":"g-olhao","nom":"Olhão — le QG","zone":"Sotavento","note":"Base du séjour. Marché, cubisme, bars de pêcheurs, départ ferries îles."},{"id":"g-fuseta","nom":"Fuseta & les salines","zone":"Sotavento","note":"15 min d'Olhão. Village coup de cœur des sources, ambiance 100% locale."},{"id":"g-tavira","nom":"Le coin de Tavira","zone":"Sotavento","note":"Tavira + Santa Luzia (capitale du poulpe) + Cabanas + Praia do Barril."},{"id":"g-cacela","nom":"Cacela Velha & l'extrême est","zone":"Sotavento","note":"Village minuscule au-dessus de la lagune, eau turquoise."},{"id":"g-faro-ria","nom":"Faro & les îles de la Ria","zone":"Sotavento","note":"Vieille ville + Ilha Deserta + Culatra/Armona/Farol."},{"id":"g-carvoeiro","nom":"Boucle Carvoeiro–Benagil–Ferragudo","zone":"Barlavento","note":"Journée avec les amis. Benagil à réserver, Algar Seco, dîner Ferragudo."},{"id":"g-lagos-sagres","nom":"Virée Lagos–Sagres–Cap St-Vincent","zone":"Barlavento","note":"Grosse journée ouest. Ponta da Piedade + coucher de soleil au Cap."},{"id":"g-cote-ouest","nom":"Costa Vicentina sauvage","zone":"Côte ouest","note":"Carrapateira, Bordeira, Amado, Arrifana, Aljezur. Prévoir pique-nique, peu de réseau."},{"id":"g-monchique","nom":"Monchique & la montagne","zone":"Terres","note":"Fóia (point culminant), Caldas thermales, restos de viande en altitude."},{"id":"g-terres","nom":"Villages des terres","zone":"Terres","note":"Silves, Loulé, Alte, Estoi. Frais le matin, marchés."},{"id":"g-vignobles","nom":"Route des vins","zone":"Transverse","note":"Dégustation = pas de volant : viser domaines proches ou modération."},{"id":"g-alentejo","nom":"Échappée Alentejo Litoral","zone":"Alentejo","note":"Zambujeira, Odeceixe, Praia da Amalia. Journée longue ou nuit sur place."}],"lieux":[{"id":"olh-mercado","nom":"Mercado Municipal de Olhão","cat":"culture","sous_cat":"marché","grappe":"g-olhao","coords":[37.0253,-7.8412],"tag":"incontournable","desc":"Les deux halles de brique rouge sur le front de lagune — plus grand marché aux poissons de la région, poisson de la criée du matin. Bars tout autour côté eau.","conseil":"Y aller le matin (fermé dimanche). Samedi = jour des producteurs.","gouts_match":["authentique","bonne bouffe"]},{"id":"olh-cubiste","nom":"Quartier cubiste d'Olhão (Barreta)","cat":"culture","sous_cat":"balade urbaine","grappe":"g-olhao","coords":[37.0262,-7.842],"tag":"incontournable","desc":"Maisons blanches cubiques à terrasses, ruelles pavées d'inspiration marocaine (liens commerciaux, pas les Maures). Unique en Algarve avec Fuseta.","conseil":"S'écarter de 20 m des artères principales : un autre monde, calme et ombragé.","fact":"Olhão n'a eu le droit de bâtir en pierre qu'en 1808 — récompense royale : des pêcheurs d'ici ont traversé l'Atlantique en petit caïque pour annoncer au roi exilé au Brésil que les Français étaient chassés. La réplique du bateau, le Bom Sucesso, est sur le front de mer près du marché.","gouts_match":["authentique","culture"]},{"id":"olh-eglise","nom":"Igreja Matriz N.S. do Rosário","cat":"culture","sous_cat":"église","grappe":"g-olhao","coords":[37.027,-7.841],"tag":"a_saisir","desc":"Église (1698-1715) financée par les pêcheurs. Retable doré, chapelle extérieure N.S. dos Aflitos où les femmes de pêcheurs priaient pour le retour des marins.","conseil":"Monter au clocher : vue sur les toits cubistes."},{"id":"olh-mural","nom":"Mural Rua da Fábrica Velha","cat":"culture","sous_cat":"street art","grappe":"g-olhao","coords":[37.0289,-7.8365],"tag":"a_saisir","desc":"Fresque monumentale en noir et blanc près du Pingo Doce côté ferries : pêcheurs, conserveries, marché — l'âme d'Olhão sur un mur. Tout le monde passe devant sans regarder.","conseil":"Combiner avec la chasse au street art dans les ruelles."},{"id":"olh-quinta-marim","nom":"Quinta de Marim (Parc Ria Formosa)","cat":"nature","sous_cat":"balade","grappe":"g-olhao","coords":[37.0333,-7.8167],"tag":"a_saisir","desc":"Centre du parc naturel à ~3 km d'Olhão : sentiers, moulin à marée, oiseaux. Petits restos locaux près de l'entrée.","conseil":"Balade le matin puis déjeuner à côté. Accessible aussi par l'Ecovia à vélo."},{"id":"olh-piteu","nom":"Pitéu da Baixa Mar","cat":"resto","sous_cat":"poisson","grappe":"g-olhao","coords":[37.0251,-7.8405],"tag":"incontournable","adresse":"Av. 5 de Outubro 12, Olhão","tel":"+351 289 705 749","horaires":"12h-15h & 19h-23h, fermé lundi (mardi soir seult)","prix":"€€","desc":"LE resto de poisson recommandé par les locaux d'Olhão (c'est le patron du bar Sete Estrelas qui l'a soufflé à l'auteur du blog). Toujours plein.","conseil":"Réserver ou arriver tôt.","gouts_match":["authentique","bonne bouffe"],"verifier":true},{"id":"olh-vai-e-volta","nom":"Vai e Volta","cat":"resto","sous_cat":"grillades à volonté","grappe":"g-olhao","coords":[37.0281,-7.8447],"tag":"incontournable","adresse":"Largo do Grémio 2, Olhão","tel":"+351 968 027 525","horaires":"midi-15h30, fermé lundi","prix":"€ (~12€ à volonté)","desc":"Concept radical : poisson grillé à volonté, pas de menu, pas de choix, cash only. Brillant.","conseil":"Midi uniquement. Arriver et espérer — pas de résa.","gouts_match":["authentique","bonne bouffe"],"verifier":true},{"id":"olh-pizza-pedra","nom":"Pizza na Pedra","cat":"resto","sous_cat":"pizza","grappe":"g-olhao","coords":[37.0252,-7.8409],"tag":"plan_b","adresse":"Av. 5 de Outubro 50, Olhão","horaires":"midi-23h","prix":"€","desc":"Le plan B parfait face au marché — bonnes pizzas, vue du 1er étage. Idéal soir d'arrivée tardive.","conseil":"Utile le 15/07 au soir si vous arrivez affamées après 23h — à vérifier si ouvert tard.","verifier":true},{"id":"olh-casinha-cris","nom":"Casinha da Cris","cat":"resto","sous_cat":"végétarien","grappe":"g-olhao","coords":[37.0268,-7.8415],"tag":"plan_b","adresse":"Tv. do Compromisso 14, Olhão","horaires":"8h-17h, fermé samedi","prix":"€","desc":"Café végétarien derrière l'église, zone piétonne près du musée. Très aimé.","verifier":true},{"id":"olh-delicia","nom":"Delícia de Olhão","cat":"cafe","sous_cat":"pastelaria","grappe":"g-olhao","coords":[37.0254,-7.8407],"tag":"a_saisir","adresse":"Av. 5 de Outubro 20, Olhão","horaires":"6h-22h","prix":"€","desc":"La pastelaria du front de mer, toujours bondée. Croissants au chocolat à 1€, pastéis de nata.","conseil":"Le spot petit-déj du séjour — à 2 min de l'hôtel."},{"id":"olh-sete-estrelas","nom":"Sete Estrelas","cat":"bar","sous_cat":"bar local","grappe":"g-olhao","coords":[37.0261,-7.84],"tag":"incontournable","adresse":"Tv. Alexandre Herculano 4, Olhão","desc":"Le bar comme il y a 50 ans : tonneaux derrière le comptoir, vieux pêcheurs, plat du jour sans menu à prix arbitraire, medronho. L'authenticité maximale d'Olhão.","conseil":"Pas de cocktails ici — café, vin, bière, medronho. C'est le but.","gouts_match":["authentique"],"verifier":true},{"id":"olh-saaz","nom":"Saaz Craft Beer Lounge","cat":"bar","sous_cat":"bière artisanale","grappe":"g-olhao","coords":[37.0266,-7.8425],"tag":"a_saisir","adresse":"Rua do Comércio 42, Olhão","horaires":"dès 16h","desc":"Bières artisanales portugaises et européennes qui tournent, staff calé. À deux rues du front de mer.","verifier":true},{"id":"olh-catita","nom":"Catita & Companhia","cat":"bar","sous_cat":"cocktails","grappe":"g-olhao","coords":[37.0255,-7.841],"tag":"a_saisir","adresse":"Av. 5 de Outubro 60, Olhão","horaires":"18h-4h, fermé lundi","desc":"Cocktails, live music, en face du marché. Ouvre tard.","conseil":"Happy hour 18h-20h.","verifier":true},{"id":"olh-panorama","nom":"Le Panorama (au marché)","cat":"bar","sous_cat":"bar-tapas","grappe":"g-olhao","coords":[37.0253,-7.8414],"tag":"a_saisir","adresse":"Mercado, Loja 53, Olhão","desc":"Petit bar tenu par un couple français côté eau du marché : verre + tapas + vue sur la Ria. Parfait apéro doré.","verifier":true},{"id":"olh-olhos-na-ria","nom":"Olhos na Ria (chez Daniella)","cat":"bar","sous_cat":"bar de pêcheurs","grappe":"g-olhao","coords":[37.0249,-7.839],"tag":"a_saisir","adresse":"Av. 5 de Outubro (vers les ferries), Olhão","desc":"Bière à 1€, pêcheurs au comptoir après la nuit en mer, tenu en famille. Brut mais accueillant — et une bonne cave à vin juste à côté.","gouts_match":["authentique"],"verifier":true},{"id":"olh-republica","nom":"República do Se7e","cat":"bar","sous_cat":"bar culturel","grappe":"g-olhao","coords":[37.0272,-7.8408],"tag":"a_saisir","adresse":"Av. da República 14, Olhão","horaires":"9h30-22h (ven-sam 23h45)","desc":"OVNI local : bar + cinéma + expos + terrasse arrière + cours de tai-chi. Pour une soirée différente.","verifier":true},{"id":"fus-village","nom":"Village de Fuseta","cat":"village","grappe":"g-fuseta","coords":[37.053,-7.746],"tag":"incontournable","desc":"Coup de cœur unanime des sources : village de pêcheurs 100% authentique, azulejos, place aux petits cafés, plage-lagune où les bancs de sable se découvrent à marée basse, échassiers.","conseil":"Expresso + pastel de nata en terrasse sur la place, puis quai des pêcheurs.","gouts_match":["authentique","anti-foule"]},{"id":"fus-lota","nom":"A Lota","cat":"resto","sous_cat":"poisson grillé","grappe":"g-fuseta","coords":[37.0525,-7.7442],"tag":"incontournable","adresse":"Largo 1° de Maio, Fuseta","tel":"+351 964 657 449","horaires":"12h-minuit, fermé jeudi","prix":"€€","desc":"Poisson grillé au charbon à côté des tables, près du Mercado et des bateaux. Le staff traverse la rue avec les plats — un spectacle en soi. Plus authentique que ses voisins du quai.","conseil":"Arriver tôt en été, ça queue partout.","gouts_match":["authentique","bonne bouffe"],"verifier":true},{"id":"fus-hamburgueria","nom":"Hamburgueria do Largo","cat":"resto","sous_cat":"burgers","grappe":"g-fuseta","coords":[37.0528,-7.745],"tag":"plan_b","adresse":"R. Ten. Barroso 48, Fuseta","horaires":"12h55-15h & 18h55-23h, fermé mercredi","prix":"€","desc":"Excellents burgers maison, tiramisu, si envie d'autre chose que du poisson.","verifier":true},{"id":"fus-green-spirit","nom":"Escandinavia – Green Spirit","cat":"resto","sous_cat":"végétarien","grappe":"g-fuseta","coords":[37.0526,-7.7448],"tag":"plan_b","adresse":"R. Ten. Barroso 11, Fuseta","horaires":"12-14h30 & 18h30-22h, fermé mardi","desc":"Végétarien cosy dans la rue piétonne du Mercado, musiciens de rue l'été, vieilles dames sur le pas de porte.","verifier":true},{"id":"fus-concha","nom":"A Concha","cat":"bar","sous_cat":"bar-resto chic","grappe":"g-fuseta","coords":[37.0532,-7.7455],"tag":"a_saisir","adresse":"Rua da Liberdade 97, Fuseta","horaires":"17h-1h, fermé lundi","desc":"Bar-resto français (Laurent Gugli) : cocktails, bons vins, et surtout un jardin caché à l'arrière — oasis dans le brouhaha estival.","verifier":true},{"id":"fus-nanobrew","nom":"Nanobrew","cat":"bar","sous_cat":"microbrasserie","grappe":"g-fuseta","coords":[37.0545,-7.7458],"tag":"a_saisir","adresse":"Rua Dr. Virgílio Inglês 114, Fuseta","horaires":"ven dès 17h, dim dès 14h (fermé lun-jeu)","desc":"Microbrasserie dans la maison d'un couple norvégien, jusqu'à 15 bières maison + hydromel. « Possiblement la meilleure bière de l'Algarve. »","conseil":"Prendre le taster de 4 verres. Horaires limités — vérifier avant !","gouts_match":["authentique"],"verifier":true},{"id":"fus-pescador","nom":"O Pescador","cat":"bar","sous_cat":"bar local","grappe":"g-fuseta","coords":[37.0529,-7.7453],"tag":"a_saisir","adresse":"Rua da Liberdade 34, Fuseta","horaires":"9h30-minuit été, fermé jeudi","desc":"Le bar de la place : pêcheurs au comptoir, terrasse mixte locaux/touristes, rough and ready mais confortable.","verifier":true},{"id":"fus-beira-mar","nom":"Snack-bar Beira Mar (le Shack n°1)","cat":"bar","sous_cat":"cabane du quai","grappe":"g-fuseta","coords":[37.0518,-7.744],"tag":"a_saisir","adresse":"Quai de Fuseta","desc":"Cabane en bois sur le quai, Sagres à 1€, ambiance maison ouverte de Francisco. Prendre sa bière et s'asseoir sur le banc face aux bateaux — ciel violet-orangé au couchant.","gouts_match":["authentique"],"verifier":true},{"id":"fus-farol-bar","nom":"Bar O Farol (Shack n°3)","cat":"bar","sous_cat":"live music","grappe":"g-fuseta","coords":[37.0517,-7.7436],"tag":"a_saisir","adresse":"Quai de Fuseta","desc":"Mercredi soir 22h : Domingos e Amigos — Domingos Caetano, ex-star du rock portugais (IRIS) né à Fuseta, joue avec ses élèves. Stones, Dire Straits, Quo. Gratuit et génial.","conseil":"Mercredis 22 et 26/07 pendant votre séjour — à ne pas rater si le concert tient toujours.","verifier":true},{"id":"fus-borda-dagua","nom":"Borda d'Água","cat":"bar","sous_cat":"bar de plage","grappe":"g-fuseta","coords":[37.0512,-7.743],"tag":"a_saisir","horaires":"9h-minuit","desc":"Le seul vrai bar de plage de Fuseta, sur le sable près de la passe. Cocktails, smoothies — cher pour Fuseta mais cadre superbe. Spot coucher de soleil.","verifier":true},{"id":"fus-trinidade","nom":"Pastelaria Trindade","cat":"cafe","sous_cat":"pastelaria","grappe":"g-fuseta","coords":[37.0529,-7.7452],"tag":"plan_b","adresse":"R. Dr. Virgílio Inglês 60A, Fuseta","horaires":"7h-20h, fermé mardi","desc":"La pastelaria de la place — meilleur jus d'orange pressé du coin selon la source.","verifier":true},{"id":"fus-mercado","nom":"Mercado Municipal de Fuseta","cat":"culture","sous_cat":"marché","grappe":"g-fuseta","coords":[37.0524,-7.7444],"tag":"a_saisir","horaires":"7h30-14h, fermé dimanche","desc":"Petit marché frais plein de vie — poisson sur glace, boucher à la demande. Le cœur battant du village."},{"id":"fus-ilha","nom":"Ilha da Fuseta / Ilha da Armona (côté est)","cat":"plage","sous_cat":"île","grappe":"g-fuseta","coords":[37.043,-7.74],"tag":"incontournable","desc":"Bancs de sable et eau turquoise face au village, ferry court ou même à pied/nage à marée très basse par endroits. Sensation de bout du monde à 5 min.","conseil":"MARÉE : consulter les horaires — la lagune se vide et se remplit. Bars de plage seulement en haute saison.","maree_sensible":true,"gouts_match":["anti-foule","nature"]},{"id":"tav-ville","nom":"Tavira","cat":"village","grappe":"g-tavira","coords":[37.127,-7.6485],"tag":"incontournable","desc":"La plus charmante ville du Sotavento : pont romain sur le Gilão, ruelles paisibles, château, ~37 églises, héritage des madragues de thon.","conseil":"Fin d'après-midi + apéro au bord du fleuve. Château pour la vue.","gouts_match":["authentique","culture"]},{"id":"tav-tres-palmeiras","nom":"Três Palmeiras","cat":"resto","sous_cat":"grillades locales","grappe":"g-tavira","coords":[37.122,-7.656],"tag":"a_saisir","adresse":"Rua Vale de Caranguejo, Tavira","tel":"+351 281 325 840","horaires":"12-16h & 17-23h (incertain, plutôt midi)","prix":"€ (~10€)","desc":"Poisson grillé « à volonté sans choix », plein de locaux, près du stade. De l'extérieur ça ne paie pas de mine — c'est le signe.","conseil":"Viser le déjeuner.","gouts_match":["authentique"],"verifier":true},{"id":"tav-little-india","nom":"Little India","cat":"resto","sous_cat":"indien","grappe":"g-tavira","coords":[37.1258,-7.651],"tag":"plan_b","adresse":"Rua Poeta Emiliano da Costa 10, Tavira","horaires":"11h30-15h & 18h-1h","desc":"Petit indien quirky et excellent, hors des sentiers battus.","verifier":true},{"id":"tav-el-tango","nom":"Churrasqueira El Tango Argentino","cat":"resto","sous_cat":"poulet piri-piri","grappe":"g-tavira","coords":[37.1245,-7.6495],"tag":"plan_b","adresse":"Rua Almirante Cândido dos Reis 227, Tavira","horaires":"fermé dimanche","desc":"Poulet piri-piri « le meilleur de Tavira » — locaux qui font la queue jusque dehors. Parfait à emporter pour la plage.","verifier":true},{"id":"tav-venezuela","nom":"Pastelaria Venezuela","cat":"cafe","sous_cat":"pastelaria","grappe":"g-tavira","coords":[37.129,-7.652],"tag":"plan_b","adresse":"R. Álvaro de Campos 11, Tavira","desc":"Pastelaria de quartier jamais vide, près de la gare de Porta Nova.","verifier":true},{"id":"tav-copos-petiscos","nom":"Copos & Petiscos","cat":"resto","sous_cat":"fruits de mer","grappe":"g-tavira","coords":[37.1275,-7.6478],"tag":"plan_b","adresse":"Rua Poeta Emiliano da Costa 6, Tavira","desc":"Fruits de mer recommandé par des amis de la source (non testé par elle).","verifier":true},{"id":"tav-santa-luzia","nom":"Santa Luzia — capitale du poulpe","cat":"village","grappe":"g-tavira","coords":[37.1092,-7.6644],"tag":"incontournable","desc":"Village de pêcheurs de 1500 âmes face à la lagune : le front de mer est une enfilade de restos de poulpe (grillé, à lagareiro, en salade). Les viviers sont à quelques km — fraîcheur imbattable.","conseil":"Déjeuner poulpe + sieste digestive à Praia do Barril juste à côté.","gouts_match":["authentique","bonne bouffe"]},{"id":"tav-barril","nom":"Praia do Barril","cat":"plage","grappe":"g-tavira","coords":[37.095,-7.669],"tag":"incontournable","desc":"Plage d'île-barrière : on y va à pied ou par le petit train touristique depuis Pedras d'el Rei, à travers la lagune. Cimetière des ancres — des centaines d'ancres rouillées des anciennes madraques de thon plantées dans les dunes.","fact":"Les ancres rendent hommage à la pêche au thon disparue dans les années 60 — un des paysages les plus photogéniques et émouvants du Sotavento.","gouts_match":["nature","anti-foule"]},{"id":"tav-cao-raivoso","nom":"Praia do Cão Raivoso","cat":"plage","sous_cat":"plage cachée","grappe":"g-tavira","coords":[37.09,-7.68],"tag":"a_saisir","desc":"« Plage du Chien Enragé » — accessible uniquement à pied/vélo par la pinède depuis Pedras d'el Rei. Dunes dorées, eaux calmes, zéro foule.","conseil":"Combo idéal : plage l'après-midi + Tavira centre le soir.","gouts_match":["anti-foule","nature"]},{"id":"tav-ilha","nom":"Ilha de Tavira","cat":"plage","sous_cat":"île","grappe":"g-tavira","coords":[37.108,-7.63],"tag":"a_saisir","desc":"Île-barrière de la Ria Formosa, 11 km de sable. Ferry depuis Tavira ou Quatro Águas.","maree_sensible":false},{"id":"cac-village","nom":"Cacela Velha","cat":"village","grappe":"g-cacela","coords":[37.156,-7.545],"tag":"incontournable","desc":"Village minuscule perché au-dessus de la lagune : une église, un fortin, quelques maisons blanches, et LA vue sur l'eau turquoise et les bancs de sable. L'un des panoramas les plus purs de l'Algarve.","conseil":"Descendre à la plage par le sentier ; à marée basse on traverse presque à pied. Huîtres au hameau de Fábrica juste à côté.","gouts_match":["authentique","anti-foule","nature"]},{"id":"far-vieille-ville","nom":"Faro — Cidade Velha","cat":"culture","grappe":"g-faro-ria","coords":[37.0146,-7.9345],"tag":"a_saisir","desc":"Vieille ville fortifiée : Arco da Vila, cathédrale, cigognes sur les clochers, Largo da Sé.","conseil":"2-3h suffisent, combiner avec une île."},{"id":"far-ilha-deserta","nom":"Ilha Deserta (Praia da Barreta)","cat":"plage","sous_cat":"île","grappe":"g-faro-ria","coords":[36.964,-7.877],"tag":"incontournable","desc":"L'île déserte : 7 km de sable blanc, silence total, uniquement accessible en bateau depuis Faro. Un seul resto (Estaminé, durable et réputé).","conseil":"Emporter ombre et eau. Le point le plus au sud du Portugal continental.","gouts_match":["anti-foule","nature"],"verifier":true},{"id":"far-culatra","nom":"Ilha da Culatra & Farol","cat":"plage","sous_cat":"île","grappe":"g-faro-ria","coords":[36.989,-7.838],"tag":"a_saisir","desc":"Île de pêcheurs habitée (ferry depuis Olhão !) : village sans voitures, restos de palourdes les pieds dans le sable, phare au bout.","conseil":"Ferry direct depuis le quai d'Olhão — l'excursion la plus simple depuis l'hôtel.","gouts_match":["authentique","anti-foule"]},{"id":"far-armona","nom":"Ilha da Armona","cat":"plage","sous_cat":"île","grappe":"g-faro-ria","coords":[37.018,-7.79],"tag":"a_saisir","desc":"Ferry depuis Olhão. Côté océan : des kilomètres de sable constellé de coquillages, quasi vide. LE plan plage-simplicité depuis la base.","conseil":"Parasol + pique-nique. Vérifier l'horaire du dernier ferry retour !","gouts_match":["anti-foule"]},{"id":"far-estoi","nom":"Palais d'Estoi & ruines de Milreu","cat":"culture","grappe":"g-faro-ria","coords":[37.096,-7.896],"tag":"plan_b","desc":"Palais rococo rose bonbon (devenu pousada) + villa romaine de Milreu à 10 min dans les terres. Combo culture au frais si journée trop chaude ou trop ventée."},{"id":"car-benagil","nom":"Grotte de Benagil","cat":"activite","sous_cat":"kayak/bateau","grappe":"g-carvoeiro","coords":[37.087,-8.4256],"tag":"incontournable","desc":"Le dôme de grès au puits de lumière — accessible uniquement par l'eau (kayak, paddle, bateau). Bondé en journée d'été.","conseil":"RÉSERVER À L'AVANCE. Y aller avant 9h = magie pure, presque seuls. Activité idéale avec les amis de Carvoeiro.","resa_requise":true,"gouts_match":["nature"],"verifier":true},{"id":"car-carvalho","nom":"Praia do Carvalho","cat":"plage","sous_cat":"plage cachée","grappe":"g-carvoeiro","coords":[37.088,-8.431],"tag":"a_saisir","desc":"Crique cachée près de Benagil, accès par un tunnel creusé dans la roche. Turquoise, protégée du vent, pas de bar — prévoir provisions.","conseil":"Tôt le matin ou fin d'après-midi. Combo naturel avec Benagil.","gouts_match":["anti-foule","nature"]},{"id":"car-algar-seco","nom":"Algar Seco & promenade de Carvoeiro","cat":"point_de_vue","grappe":"g-carvoeiro","coords":[37.0885,-8.464],"tag":"incontournable","desc":"Formations rocheuses spectaculaires (arches, piscines, le « boneca ») reliées à Carvoeiro par une passerelle en bois le long des falaises. Superbe au couchant.","gouts_match":["nature"]},{"id":"car-marinha","nom":"Praia da Marinha & Sept Vallées Suspendues","cat":"nature","sous_cat":"rando","grappe":"g-carvoeiro","coords":[37.09,-8.412],"tag":"incontournable","desc":"L'une des plus belles plages d'Europe + le sentier des 7 Vallées Suspendues (Percurso dos Sete Vales Suspensos) qui court au sommet des falaises entre Marinha et Vale de Centeanes (~6 km aller).","conseil":"En juillet : partir TÔT (chaleur + parking). Eau, casquette. Faire un tronçon seulement si les amis préfèrent.","gouts_match":["nature"]},{"id":"car-ferragudo","nom":"Ferragudo","cat":"village","grappe":"g-carvoeiro","coords":[37.126,-8.52],"tag":"a_saisir","desc":"Ancien village de pêcheurs au charme préservé face à Portimão — le compromis authenticité/plages du Barlavento.","conseil":"Dîner en fin de journée avec les amis après Benagil."},{"id":"car-rei-das-praias","nom":"Rei das Praias","cat":"resto","sous_cat":"fruits de mer plage","grappe":"g-carvoeiro","coords":[37.117,-8.515],"tag":"a_saisir","adresse":"Praia dos Caneiros, Ferragudo","prix":"€€€ (40-50€)","desc":"Resto de plage niché dans une crique près de Praia dos Caneiros : cataplana légendaire, gambas grillées.","conseil":"Réserver une table dehors au coucher du soleil.","resa_requise":true,"verifier":true},{"id":"car-cult-n-art","nom":"Cult n' Art Café (Alvor)","cat":"resto","sous_cat":"tapas + artisanat","grappe":"g-carvoeiro","coords":[37.129,-8.592],"tag":"a_saisir","desc":"Pause déjeuner charmante à Alvor : tapas originaux, produits frais, couple aux petits soins — ET un espace artisanat local intégré. Double coche pour vous : bouffe + shopping artisan.","conseil":"Alvor = aussi huîtres en direct du producteur + pont de bois sur le marais au couchant.","gouts_match":["authentique","bonne bouffe"],"verifier":true},{"id":"lag-ponta-piedade","nom":"Ponta da Piedade","cat":"point_de_vue","grappe":"g-lagos-sagres","coords":[37.08,-8.669],"tag":"incontournable","desc":"Le chef-d'œuvre géologique de Lagos : pitons, arches et grottes dorées. Escalier vers les criques, sentier au sommet des falaises.","conseil":"Malgré la foule de Lagos, le site vaut l'exception. Tôt le matin ou au couchant.","gouts_match":["nature"]},{"id":"lag-estudantes","nom":"Praia dos Estudantes","cat":"plage","sous_cat":"plage cachée","grappe":"g-lagos-sagres","coords":[37.096,-8.669],"tag":"a_saisir","desc":"Petite plage oubliée de Lagos, accès par tunnel depuis Praia da Batata, pont « romain » entre les falaises. Photogénique et calme.","conseil":"Marée basse impérative — peu de sable à marée haute.","maree_sensible":true},{"id":"lag-a-forja","nom":"A Forja","cat":"resto","sous_cat":"poisson","grappe":"g-lagos-sagres","coords":[37.103,-8.674],"tag":"a_saisir","adresse":"R. dos Ferreiros 17, Lagos","prix":"€€ (15-25€)","horaires":"pas de résa","desc":"L'institution de Lagos : poisson grillé simple et honnête, prix imbattables, toujours plein de locaux.","conseil":"Arriver tôt ou patienter.","gouts_match":["authentique","bonne bouffe"],"verifier":true},{"id":"sag-cabo","nom":"Cabo de São Vicente","cat":"point_de_vue","grappe":"g-lagos-sagres","coords":[37.0233,-8.9958],"tag":"incontournable","desc":"Le point le plus occidental de l'Europe continentale — le dernier endroit du continent où le soleil se couche sur l'Atlantique. Falaises de 75 m, phare historique.","conseil":"Arriver 45 min avant le couchant (parking + place). Veste même en juillet — le vent souffle fort. Couchant vers 20h50 fin juillet.","gouts_match":["nature"]},{"id":"sag-beliche","nom":"Forte do Beliche","cat":"point_de_vue","grappe":"g-lagos-sagres","coords":[37.027,-8.977],"tag":"a_saisir","desc":"Petit fort entre Sagres et le Cap — le spot couchant moins connu que le Cabo, même lumière, moins de monde.","gouts_match":["anti-foule"]},{"id":"sag-fortaleza","nom":"Forteresse de Sagres & Ponta de Sagres","cat":"culture","grappe":"g-lagos-sagres","coords":[36.995,-8.948],"tag":"a_saisir","desc":"L'éperon fortifié de l'école des navigateurs d'Henri le Navigateur, rose des vents géante, falaises à perte de vue."},{"id":"co-bordeira","nom":"Praia da Bordeira","cat":"plage","sous_cat":"plage sauvage","grappe":"g-cote-ouest","coords":[37.197,-8.904],"tag":"incontournable","desc":"Immense plage sauvage de la côte ouest : dunes infinies, vagues atlantiques, à peine un bâtiment en vue. Passerelles en bois, falaises pour le couchant.","conseil":"Se garer en haut de la colline pour LA vue. Souvent venteux — journée exploration plus que serviette.","gouts_match":["anti-foule","nature"]},{"id":"co-amado","nom":"Praia do Amado","cat":"plage","sous_cat":"surf","grappe":"g-cote-ouest","coords":[37.168,-8.903],"tag":"a_saisir","desc":"Le spot surf emblématique de Carrapateira — écoles de surf, ambiance décontractée, couchers de soleil réputés.","conseil":"Si envie d'une initiation surf, c'est ici ou Arrifana."},{"id":"co-murracao","nom":"Praia da Murração","cat":"plage","sous_cat":"plage secrète","grappe":"g-cote-ouest","coords":[37.123,-8.918],"tag":"a_saisir","desc":"L'une des plages les plus vierges de la région — chemin de terre, aucune installation, aucun réseau. On se sent coupé du monde.","conseil":"Tout emporter. La FIAT 500 passera doucement sur la piste — prudence.","gouts_match":["anti-foule","nature"]},{"id":"co-arrifana","nom":"Praia da Arrifana","cat":"plage","sous_cat":"baie+surf","grappe":"g-cote-ouest","coords":[37.292,-8.865],"tag":"a_saisir","desc":"Coup de cœur du road-tripper du corpus : baie unique protégée des vents du nord, village accroché à la falaise, spot de surf.","conseil":"Loin d'Olhão (~1h50) — à combiner avec Aljezur/Odeceixe en journée côte ouest complète."},{"id":"co-monte-clerigo","nom":"Praia de Monte Clérigo & O Sargo","cat":"plage","grappe":"g-cote-ouest","coords":[37.34,-8.851],"tag":"a_saisir","desc":"Plage familiale sauvage près d'Aljezur + le resto O Sargo face à la mer, « cuisine succulente, l'endroit idéal pour se poser sur la côte ouest ».","verifier":true},{"id":"co-odeceixe","nom":"Odeceixe (village + plage)","cat":"village","grappe":"g-alentejo","coords":[37.434,-8.771],"tag":"a_saisir","desc":"Porte d'entrée nord de l'Algarve : village pavé + plage spectaculaire dans le méandre de la rivière — moitié fleuve, moitié océan.","gouts_match":["authentique","nature"]},{"id":"mon-foia","nom":"Fóia (Monchique)","cat":"point_de_vue","grappe":"g-monchique","coords":[37.315,-8.592],"tag":"a_saisir","desc":"Le point culminant de l'Algarve (902 m) : par temps clair, toute la côte à vos pieds. Fraîcheur bienvenue en juillet.","conseil":"Combiner : village de Monchique + Fóia + resto Luar da Fóia."},{"id":"mon-luar-foia","nom":"Luar da Fóia","cat":"resto","sous_cat":"viande/montagne","grappe":"g-monchique","coords":[37.313,-8.585],"tag":"a_saisir","adresse":"N266-3 4, Monchique","desc":"Terrasse avec vue incroyable sur la côte, LE resto de viande de la montagne selon le corpus.","verifier":true},{"id":"mon-jardin-oliviers","nom":"Le Jardin des Oliviers","cat":"resto","sous_cat":"traditionnel","grappe":"g-monchique","coords":[37.298,-8.57],"tag":"plan_b","adresse":"Sítio do Porto Escuro, dir. Monchique","desc":"Traditionnel portugais copieux, patron francophone super sympa.","verifier":true},{"id":"ter-silves","nom":"Silves & son château","cat":"culture","grappe":"g-terres","coords":[37.189,-8.438],"tag":"a_saisir","desc":"Ancienne capitale maure de l'Algarve : château de grès rouge, cathédrale gothique, ruelles au bord de l'Arade.","conseil":"Matin (chaleur) + Marisqueira Rui pour le déjeuner si envie de fruits de mer XXL."},{"id":"ter-marisqueira-rui","nom":"Marisqueira Rui","cat":"resto","sous_cat":"marisqueira","grappe":"g-terres","coords":[37.19,-8.439],"tag":"a_saisir","adresse":"R. Comendador Vilarinho 27, Silves","prix":"€€€ (30-40€)","desc":"Plateaux débordants de crevettes, crabe, palourdes — désordonné, délicieux, inoubliable. Institution.","conseil":"Crevettes à l'ail et riz aux fruits de mer incontournables.","verifier":true},{"id":"ter-alte","nom":"Alte & O Folclore","cat":"village","grappe":"g-terres","coords":[37.238,-8.174],"tag":"plan_b","desc":"Village blanc des terres avec sa source fraîche (fontes) + resto typique O Folclore (très bon, prix raisonnable) + Bruno's Bar à Benafim à 10 min (cocktails, live).","verifier":true},{"id":"ter-loule","nom":"Loulé & son marché","cat":"culture","sous_cat":"marché","grappe":"g-terres","coords":[37.138,-8.023],"tag":"a_saisir","desc":"Marché néo-mauresque emblématique (samedi = grand marché), ruelles artisanales — l'un des rares vrais spots artisanat/shopping du corpus.","conseil":"Samedi matin idéalement. Chercher les ateliers de cuivre et de liège autour du marché.","gouts_match":["authentique","shopping"]},{"id":"vig-quinta-tor","nom":"Quinta da Tôr","cat":"vignoble","grappe":"g-vignobles","coords":[37.193,-8.019],"tag":"a_saisir","adresse":"Tôr, Loulé","prix":"13,50-15,50€","site":"quintadator.com","desc":"Domaine familial depuis les années 1500, piscine à débordement vue vignes pendant la dégustation. Le plus proche d'Olhão (~35 min) et le moins cher.","conseil":"Dégustation classique 4 vins + pain maison + huile d'olive à 13,50€. Marine ou toi au volant après — modération ou cracher.","resa_requise":true,"verifier":true},{"id":"vig-al-lagar","nom":"Al-Lagar by Casa Santos Lima","cat":"vignoble","grappe":"g-vignobles","coords":[37.12,-7.66],"tag":"a_saisir","adresse":"Tavira","site":"casasantoslima.com","desc":"Le domaine du Sotavento — combinable avec une journée Tavira.","resa_requise":true,"verifier":true},{"id":"vig-morgado","nom":"Morgado do Quintão","cat":"vignoble","grappe":"g-vignobles","coords":[37.145,-8.49],"tag":"a_saisir","adresse":"Estômbar","prix":"35-60€","site":"morgadodoquintao.pt","desc":"Domaine 1810, vignes parmi les plus anciennes d'Algarve, bio et peu interventionniste. Le « déjeuner fermier » sous l'olivier centenaire (55-60€) est une expérience.","conseil":"Combinable avec la boucle Carvoeiro (15 min).","resa_requise":true,"verifier":true},{"id":"ale-zambujeira","nom":"Zambujeira do Mar","cat":"village","grappe":"g-alentejo","coords":[37.526,-8.786],"tag":"a_saisir","desc":"Village de l'Alentejo Litoral perché sur la falaise — déjà repéré dans tes préférences. ~1h45 d'Olhão.","gouts_match":["authentique","anti-foule"]},{"id":"ale-amalia","nom":"Praia da Amália","cat":"plage","sous_cat":"plage secrète","grappe":"g-alentejo","coords":[37.548,-8.79],"tag":"a_saisir","desc":"Plage sauvage quasi déserte : sentier de gauche par une petite forêt tropicale le long d'un cours d'eau avec cascade, débouché sur sable immense et eau turquoise. Le sentier de droite monte à la falaise — vue incroyable.","conseil":"Faire d'abord la falaise (droite), puis descendre (gauche). Retour un peu sportif.","gouts_match":["anti-foule","nature"]},{"id":"alb-atipico","nom":"Atípico Wines & Tapas","cat":"resto","sous_cat":"tapas","grappe":"g-terres","coords":[37.09,-8.253],"tag":"plan_b","adresse":"Rua das Telecomunicações 24, Albufeira","tel":"+351 935 013 836","horaires":"lun-sam 18h30-22h, fermé dimanche","desc":"Tapas maison (poulpe confit, paté de grand-père) par un couple français, chic et cosy, bonne carte de vins portugais. Si passage par Albufeira.","resa_requise":true,"verifier":true},{"id":"alb-cocheira","nom":"A Cocheira","cat":"resto","sous_cat":"traditionnel","grappe":"g-terres","coords":[37.105,-8.26],"tag":"plan_b","adresse":"Caminho dos Brejos I, Albufeira","tel":"+351 289 101 272","horaires":"12h-minuit tous les jours","desc":"Familial, à l'écart du centre, cataplana en 3 versions, grande carte de vins, prix plus doux qu'en ville.","verifier":true},{"id":"far-tertulia","nom":"Tertúlia Algarvia","cat":"resto","sous_cat":"traditionnel","grappe":"g-faro-ria","coords":[37.015,-7.935],"tag":"plan_b","adresse":"Faro, vieille ville","desc":"Produits locaux dans la vieille ville — fruits de mer, caroube.","verifier":true},{"id":"tav-noelia","nom":"Restaurante Noélia","cat":"resto","sous_cat":"gastronomique","grappe":"g-tavira","coords":[37.135,-7.602],"tag":"a_saisir","adresse":"Av. Ria Formosa 2, Cabanas de Tavira","prix":"€€€ (30-40€)","desc":"Adorée des chefs et des locaux : riz aux palourdes ou à l'encre de seiche « matière des légendes de l'Algarve ». LE repas-événement du Sotavento.","conseil":"APPELER pour réserver — complet des semaines à l'avance. À faire dès maintenant pour le séjour !","resa_requise":true,"verifier":true},{"id":"shp-olh-4elementos","nom":"4Elementos Cerâmica & Azulejo","cat":"shopping","sous_cat":"céramique/azulejos","grappe":"g-olhao","coords":[37.0264,-7.8418],"tag":"a_saisir","adresse":"Vieille ville, Olhão","desc":"Mi-boutique mi-galerie : azulejos, céramiques, bijoux — uniquement des artistes locaux. C'est ici que la mairie fait fabriquer les azulejos des rues d'Olhão. Atelier visitable à l'arrière.","conseil":"Avis récents contrastés sur l'accueil — juger sur place.","verif":"2026-07-02"},{"id":"shp-olh-mosaic","nom":"MosaicOlhão","cat":"shopping","sous_cat":"artisanat/atelier","grappe":"g-olhao","coords":[37.0266,-7.8426],"tag":"a_saisir","adresse":"Rua do Comércio 43, Olhão","desc":"Boutique-atelier de mosaïques faites sur place, pièces uniques. Propose aussi des cours (30€/1h en groupe) — on repart avec sa création.","conseil":"Idée activité créative un jour de canicule ou de vent.","verif":"2026-07-02"},{"id":"shp-olh-cubista","nom":"Point de vente Casa Cubista","cat":"shopping","sous_cat":"design portugais","grappe":"g-olhao","coords":[37.0268,-7.8412],"tag":"incontournable","adresse":"R. da Soledade 6, Olhão","tel":"+351 928 100 218","desc":"LA marque design née à Olhão (son nom vient des maisons cubistes de la ville) : céramique graphique, textiles, liège — artisanat traditionnel revisité contemporain. Revendeur officiel à 5 min de l'hôtel.","conseil":"Le souvenir parfait : beau, local, avec une histoire. Casa Cubista est vendue jusqu'à Londres et Toronto — ici c'est la source.","verif":"2026-07-02"},{"id":"shp-olh-conservas","nom":"Conserves Manná / Conserveira do Sul","cat":"shopping","sous_cat":"bouffe à ramener","grappe":"g-olhao","coords":[37.0253,-7.8412],"tag":"a_saisir","adresse":"Épiceries et marché d'Olhão","desc":"La conserverie d'Olhão depuis 1954 (marques Manná, Júpiter, Good Boy) : sardines, maquereau, thon mis en boîte à la main, sans conservateurs. Boîtes colorées = cadeaux parfaits, légers et bons.","conseil":"Chercher les boîtes Manná au marché et dans les épiceries fines de la ville — production 100% olhanense.","verif":"2026-07-02"},{"id":"shp-olh-ria","nom":"Ria Shopping","cat":"shopping","sous_cat":"centre commercial","grappe":"g-olhao","coords":[37.035,-7.85],"tag":"plan_b","desc":"Petit centre commercial en sortie de ville : vêtements basiques, tech, supermarché. Le dépannage pratique.","verif":"2026-07-02"},{"id":"shp-tav-casa-portas","nom":"Casa das Portas","cat":"shopping","sous_cat":"cadeaux/artisanat","grappe":"g-tavira","coords":[37.1265,-7.649],"tag":"a_saisir","adresse":"Centre, Tavira","desc":"Boutique indépendante qui tranche avec les magasins de souvenirs génériques : artisanat soigneusement sélectionné, célèbres impressions de portes. Accueil réputé charmant.","verif":"2026-07-02"},{"id":"shp-tav-armazem","nom":"Armazém Português","cat":"shopping","sous_cat":"céramique portugaise","grappe":"g-tavira","coords":[37.1262,-7.6485],"tag":"a_saisir","adresse":"Près du château, Tavira","desc":"Céramiques portugaises de qualité : Bordallo Pinheiro, Casa Cubista et autres belles marques réunies.","verif":"2026-07-02"},{"id":"shp-tav-kozii","nom":"Kozii","cat":"shopping","sous_cat":"concept store mode","grappe":"g-tavira","coords":[37.1258,-7.6488],"tag":"a_saisir","adresse":"À deux pas du centre historique, Tavira","desc":"LE concept store mode & design de Tavira pour qui aime la mode réfléchie.","verif":"2026-07-02"},{"id":"shp-tav-estrelita","nom":"Casa Estrelita","cat":"shopping","sous_cat":"concept store","grappe":"g-tavira","coords":[37.1246,-7.6494],"tag":"a_saisir","adresse":"Rua Almirante Cândido dos Reis 41, Tavira","desc":"Concept store d'art de vivre portugais — même rue que le poulet piri-piri El Tango, combo pratique.","verif":"2026-07-02"},{"id":"shp-tav-granplaza","nom":"Tavira Gran Plaza","cat":"shopping","sous_cat":"centre commercial","grappe":"g-tavira","coords":[37.12,-7.656],"tag":"plan_b","desc":"Le centre commercial de Tavira : Zara, H&M, Worten, cinéma. Si besoin de vraies enseignes.","verif":"2026-07-02"},{"id":"shp-lou-empreita","nom":"Casa da Empreita","cat":"shopping","sous_cat":"vannerie traditionnelle","grappe":"g-terres","coords":[37.139,-8.0225],"tag":"a_saisir","adresse":"Centre historique, Loulé","desc":"Vannerie en feuilles de palmier tressée main — sacs, chapeaux, paniers d'un savoir-faire séculaire relancé par le projet de design TASA. Le vrai artisanat algarvien, pas le souvenir d'usine.","conseil":"Dans la Cidade Velha autour, les derniers chaudronniers martèlent encore le cuivre dans leurs ateliers ouverts sur rue.","verif":"2026-07-02"},{"id":"shp-sbr-liege","nom":"São Brás de Alportel — route du liège","cat":"shopping","sous_cat":"liège","grappe":"g-terres","coords":[37.152,-7.888],"tag":"a_saisir","desc":"L'ancienne capitale mondiale du liège : boutiques spécialisées (sacs, accessoires, chaussures en liège de qualité), Museu do Traje, ateliers. Chaque pièce de liège a au moins 25 ans — le cycle de croissance de l'écorce.","conseil":"À 20 min d'Olhão par les terres. La boutique d'artisanat 100% portugais tenue par Angélique (accueil réputé adorable) vaut l'arrêt.","verif":"2026-07-02"},{"id":"shp-far-santo-antonio","nom":"Rua de Santo António & Cidade Velha","cat":"shopping","sous_cat":"rue commerçante","grappe":"g-faro-ria","coords":[37.017,-7.932],"tag":"a_saisir","desc":"L'artère commerçante piétonne de Faro : mode, chaussures, enseignes portugaises (Parfois, Natura). Dans la vieille ville : céramique, liège, couvertures en laine, bijoux d'artisans.","verif":"2026-07-02"},{"id":"shp-far-pipeline","nom":"Pipeline Surf Shop","cat":"shopping","sous_cat":"surf/skate/baskets","grappe":"g-faro-ria","coords":[37.018,-7.934],"tag":"incontournable","adresse":"Largo de São Pedro 10, Faro","desc":"Le surf shop le plus complet de l'Algarve est : RVCA, Patagonia, Rip Curl, Billabong, Volcom, Carhartt, The North Face — planches, combis et fringues. À 15 min d'Olhão.","conseil":"VOTRE spot baskets/streetwear/surf le plus proche de la base.","verif":"2026-07-02"},{"id":"shp-far-outlet","nom":"MAR Shopping & Designer Outlet Algarve","cat":"shopping","sous_cat":"outlet","grappe":"g-terres","coords":[37.094,-8.118],"tag":"plan_b","desc":"Le grand outlet de la région (Loulé, sortie A22) : marques dégriffées dont Ericeira Surf & Skate, ouvert 10h-23h tous les jours. Pour une session baskets/mode à prix réduits.","verif":"2026-07-02"},{"id":"shp-lag-mar-estorias","nom":"Mar d'Estórias","cat":"shopping","sous_cat":"concept store + rooftop","grappe":"g-lagos-sagres","coords":[37.101,-8.673],"tag":"a_saisir","adresse":"R. Cândido dos Reis, Lagos","desc":"Le lieu hybride de Lagos : concept store 100% créateurs portugais (céramique, artisanat, produits locaux, vins) + resto de petiscos + terrasse rooftop vue mer. Shopping ET pause en un seul arrêt.","conseil":"L'arrêt malin si journée Lagos — évite de multiplier les boutiques dans la foule.","verif":"2026-07-02"},{"id":"shp-lag-olaria","nom":"Olaria Nova","cat":"shopping","sous_cat":"céramique d'art","grappe":"g-lagos-sagres","coords":[37.102,-8.6735],"tag":"a_saisir","adresse":"R. Silva Lopes 30, Lagos","horaires":"lun-sam 10h-19h, fermé dimanche","desc":"Parmi les plus belles céramiques de l'Algarve — pièces originales d'un collectif familial d'artistes, inspirées de la mer. Aussi bijoux, sacs, déco.","verif":"2026-07-02"},{"id":"shp-lag-candido","nom":"Rua Cândido dos Reis (Lagos)","cat":"shopping","sous_cat":"rue mode","grappe":"g-lagos-sagres","coords":[37.1015,-8.6728],"tag":"plan_b","desc":"La rue mode de Lagos : boutiques tendance, chaussures (Shoe Heaven), skate shop Good Times, surfwear, accessoires en liège.","verif":"2026-07-02"},{"id":"shp-sag-boardtrader","nom":"Board Trader Algarve (Sagres)","cat":"shopping","sous_cat":"surf","grappe":"g-lagos-sagres","coords":[37.008,-8.944],"tag":"a_saisir","desc":"Le surf shop de référence de Sagres — Mike règle l'équipement de chaque surfeur, achat-vente de planches d'occasion, prévisions du jour. Aussi Wavesensations à Sagres même.","verif":"2026-07-02"},{"id":"shp-alj-swsurf","nom":"SW Surf Shop & Arrifana Sunset (Aljezur)","cat":"shopping","sous_cat":"surf","grappe":"g-cote-ouest","coords":[37.319,-8.803],"tag":"plan_b","desc":"Les surf shops de la côte ouest : SW à Aljezur (multi-marques), Arrifana Sunset entre Vale da Telha et la plage (planches, combis, conseils spots gratuits).","verif":"2026-07-02"},{"id":"act-dauphins-ria","nom":"Sortie dauphins — Ria Formosa","cat":"activite","sous_cat":"bateau demi-journée","grappe":"g-faro-ria","coords":[37.014,-7.935],"tag":"a_saisir","desc":"Départ marina de Faro : on passe les îles-barrières pour chercher les dauphins au large (4h, ou formule 2h30 dauphins + baleines de Minke). Combinable avec un arrêt sur les îles.","conseil":"Réserver la veille. Mer plus calme le matin.","resa_requise":true,"verifier":true},{"id":"act-bateau-solaire","nom":"Bateau solaire au coucher du soleil","cat":"activite","sous_cat":"croisière douce","grappe":"g-faro-ria","coords":[37.0145,-7.934],"tag":"a_saisir","desc":"Une heure de glisse silencieuse dans la lagune au couchant, en bateau électrique-solaire — que le clapotis et les oiseaux. La plus belle entrée en matière de la Ria Formosa, et la plus respectueuse.","conseil":"LE plan doux d'un premier soir. Réservation en ligne conseillée.","resa_requise":true,"gouts_match":["nature","anti-foule"],"verifier":true},{"id":"act-iles-bateau","nom":"Excursion îles Barreta & Culatra (3h)","cat":"activite","sous_cat":"bateau + guide nature","grappe":"g-faro-ria","coords":[37.0142,-7.9345],"tag":"a_saisir","desc":"Navigation dans les chenaux entre bancs de sable et herbiers, explications d'un guide naturaliste, arrêts sur les deux îles emblématiques.","resa_requise":true,"verifier":true},{"id":"act-birdwatch","nom":"Observation des oiseaux en bateau électrique","cat":"activite","sous_cat":"ornithologie","grappe":"g-faro-ria","coords":[37.0148,-7.933],"tag":"plan_b","desc":"Sortie spéciale ornitho en bateau silencieux : flamants, spatules, échassiers — la Ria est sur la grande route de migration. Guide naturaliste calé qui repère ce que vous ne voyez pas.","resa_requise":true,"verifier":true},{"id":"act-kayak-ria","nom":"Kayak dans la Ria Formosa","cat":"activite","sous_cat":"kayak/paddle","grappe":"g-olhao","coords":[37.03,-7.83],"tag":"a_saisir","desc":"Pagayer entre marais, chenaux et bancs de sable au départ d'Olhão ou Faro — l'autre manière, active et au ras de l'eau, de vivre la lagune.","conseil":"Tôt le matin : lumière, calme, chaleur supportable.","resa_requise":true,"verifier":true},{"id":"nat-salines-fuseta","nom":"Marais salants de Fuseta & flamants roses","cat":"nature","sous_cat":"balade","grappe":"g-fuseta","coords":[37.057,-7.752],"tag":"incontournable","desc":"À quelques minutes à pied du village, les salines où paradent les flamants roses. Spectacle au meilleur à l'aube ou au crépuscule.","conseil":"Combo parfait : salines au couchant puis bière au shack du quai.","gouts_match":["nature","anti-foule"]},{"id":"act-train-barril","nom":"Petit train de Barril & cimetière d'ancres","cat":"activite","sous_cat":"insolite","grappe":"g-tavira","coords":[37.098,-7.671],"tag":"a_saisir","desc":"Depuis Pedras d'el Rei, un mini-train traverse marais et méandres jusqu'à la Praia do Barril — arrivée sur le cimetière d'ancres et son petit musée du thon.","conseil":"On peut aussi faire l'aller à pied (2 km plats) et le retour en train."},{"id":"act-benagil-prive","nom":"Bateau privatif grottes & Benagil (3h)","cat":"activite","sous_cat":"bateau privé","grappe":"g-carvoeiro","coords":[37.073,-8.117],"tag":"plan_b","prix":"300€ (1-3 pers) / 70€/pers (4-6)","desc":"Départ marina de Vilamoura : falaises d'Albufeira, grottes, Benagil en prenant son temps, pique-nique à bord possible, dauphins avec un peu de chance. À 6, le prix devient raisonnable — idée à partager avec les amis de Carvoeiro.","resa_requise":true,"verifier":true},{"id":"act-dauphins-alb","nom":"Dauphins & grottes depuis Albufeira (2h)","cat":"activite","sous_cat":"bateau","grappe":"g-carvoeiro","coords":[37.082,-8.262],"tag":"plan_b","prix":"~35€","desc":"Virée de 2h entre la marina d'Albufeira et Carvoeiro : dauphins (meilleure période mai-octobre) + grottes marines en combiné.","resa_requise":true,"verifier":true},{"id":"act-jeep-serra","nom":"Safari jeep dans l'Algarve profonde","cat":"activite","sous_cat":"arrière-pays","grappe":"g-terres","coords":[37.2,-8.05],"tag":"plan_b","prix":"dès 42€/4h","desc":"En jeep hors des sentiers battus : monts, vallées, villages, dégustation de miel artisanal et visite d'une vieille distillerie de medronho. Guide incollable sur le chêne-liège.","resa_requise":true,"verifier":true},{"id":"act-surf-ouest","nom":"Initiation surf — Amado ou Arrifana","cat":"activite","sous_cat":"surf","grappe":"g-cote-ouest","coords":[37.169,-8.902],"tag":"a_saisir","desc":"Les écoles de surf de la Costa Vicentina prennent les débutantes complètes — combinaison fournie, vagues d'Atlantique, fous rires garantis.","conseil":"Réserver la veille suffit en général. Cours du matin = moins de vent.","resa_requise":true,"verifier":true},{"id":"act-ecovia","nom":"Ecovia à vélo : Olhão → Fuseta par la lagune","cat":"activite","sous_cat":"vélo","grappe":"g-olhao","coords":[37.033,-7.81],"tag":"a_saisir","desc":"Tronçon plat de l'Ecovia du Litoral le long de la Ria : Quinta de Marim, salines, oiseaux, arrivée à Fuseta pour déjeuner. ~10 km faciles.","conseil":"Location de vélos à Olhão. Partir tôt, rentrer en train régional si flemme (vélos acceptés)."},{"id":"nat-trilho-pescadores","nom":"Trilho dos Pescadores (Rota Vicentina)","cat":"nature","sous_cat":"grande rando","grappe":"g-cote-ouest","coords":[37.31,-8.85],"tag":"a_saisir","desc":"Le sentier des pêcheurs suit les falaises de la Costa Vicentina entre Odeceixe, Aljezur et Sagres — l'océan pour soi seule. Tronçons de 9-22 km, venteux, zéro ombre.","conseil":"Pour vous : un tronçon court au départ d'Arrifana ou d'Odeceixe, pas une étape entière. Eau + casquette + coupe-vent.","gouts_match":["nature","anti-foule"]},{"id":"mon-caldas","nom":"Caldas de Monchique","cat":"village","sous_cat":"village thermal","grappe":"g-monchique","coords":[37.292,-8.554],"tag":"a_saisir","desc":"Hameau thermal niché dans les eucalyptus sous Monchique : eau de source réputée, fraîcheur, medronho. Le contrepoint vert à la fournaise de la côte.","conseil":"Boucle idéale : Caldas → village de Monchique → Fóia → déjeuner en altitude."},{"id":"mon-medronho","nom":"Distillerie de medronho (Monchique)","cat":"activite","sous_cat":"dégustation","grappe":"g-monchique","coords":[37.317,-8.555],"tag":"plan_b","desc":"L'eau-de-vie d'arbouse, fierté de la serra, se visite chez les petits producteurs de Monchique — dégustation à la clé.","conseil":"Celle qui goûte ne conduit pas la descente. 😉","resa_requise":true,"verifier":true},{"id":"tav-ilha-cabanas","nom":"Ilha de Cabanas","cat":"plage","sous_cat":"île","grappe":"g-tavira","coords":[37.125,-7.595],"tag":"a_saisir","desc":"Depuis le village de Cabanas, une petite embarcation traverse la lagune vers le cordon de sable d'en face — plage paradisiaque, équipée juste ce qu'il faut.","conseil":"Combo évident avec Noélia (le resto est à Cabanas même)."},{"id":"pdv-senhora-rocha","nom":"Chapelle Senhora da Rocha","cat":"point_de_vue","grappe":"g-carvoeiro","coords":[37.099,-8.38],"tag":"a_saisir","desc":"Chapelle blanche posée sur un éperon au-dessus de la mer, entre Armação de Pêra et Porches — l'un des points de vue les plus purs de la côte centrale, sur le sentier des 7 Vallées.","gouts_match":["nature"]},{"id":"pdv-alfanzina","nom":"Phare d'Alfanzina","cat":"point_de_vue","grappe":"g-carvoeiro","coords":[37.086,-8.443],"tag":"plan_b","desc":"Phare rouge et blanc de 1920 dressé sur les falaises entre Benagil et Carvoeiro — étape photogénique du sentier des 7 Vallées, quasi personne."},{"id":"far-ilha-faro","nom":"Ilha de Faro (Praia de Faro)","cat":"plage","grappe":"g-faro-ria","coords":[37.008,-7.991],"tag":"plan_b","desc":"La langue de sable accessible en voiture à l'ouest de Faro : plages, restos, observatoire à oiseaux et sentiers. Pratique mais plus fréquentée que vos îles.","conseil":"Plutôt un plan dépannage proche aéroport — vos ferries d'Olhão font mieux."},{"id":"far-estamine","nom":"Estaminé (Ilha Deserta)","cat":"resto","sous_cat":"poisson île déserte","grappe":"g-faro-ria","coords":[36.965,-7.876],"tag":"a_saisir","prix":"€€€","desc":"Le seul restaurant de l'île Déserte — tournant à l'énergie solaire, poisson de la lagune, les pieds littéralement dans 7 km de sable vide.","conseil":"Réserver si vous visez le déjeuner lors de la journée Ilha Deserta (navette bateau incluse dans certaines formules).","resa_requise":true,"verifier":true},{"id":"qdl-gigis","nom":"Gigi's (Quinta do Lago)","cat":"bar","sous_cat":"beach bar couchant","grappe":"g-faro-ria","coords":[37.041,-8.016],"tag":"plan_b","desc":"Le classique du coin pour un verre au coucher du soleil les pieds (presque) dans le sable, côté Quinta do Lago — chic mais décontracté.","verifier":true},{"id":"nat-alvor-passerelles","nom":"Passerelles d'Alvor sur le marais","cat":"nature","sous_cat":"balade couchant","grappe":"g-carvoeiro","coords":[37.124,-8.602],"tag":"a_saisir","desc":"Le grand ponton de bois qui serpente sur l'estuaire et les dunes d'Alvor — balade plate et somptueuse à l'heure dorée, oiseaux partout.","conseil":"Enchaîner : passerelles au couchant après les huîtres du producteur d'Alvor.","gouts_match":["nature"]},{"id":"co-pontal-carrapateira","nom":"Boucle du Pontal da Carrapateira","cat":"point_de_vue","grappe":"g-cote-ouest","coords":[37.188,-8.912],"tag":"a_saisir","desc":"Petite route/sentier en boucle sur le promontoire entre Bordeira et Amado : belvédères sauvages enchaînés, ambiance bout du monde.","gouts_match":["nature","anti-foule"]}],"facts":[{"lieu":"olh-cubiste","texte":"Le style cubiste d'Olhão vient de ses liens commerciaux avec le Maroc, pas de l'occupation maure — les Maures étaient partis 500 ans avant que la ville n'ait le droit de construire en pierre."},{"lieu":"tav-barril","texte":"Le cimetière d'ancres de Barril : des centaines d'ancres rouillées plantées dans les dunes, mémorial silencieux de la pêche au thon disparue dans les années 60."},{"lieu":"sag-cabo","texte":"Au Cabo de São Vicente, vous regardez le dernier coucher de soleil du continent européen — plus à l'ouest, il n'y a que l'Atlantique et l'Amérique."},{"lieu":null,"texte":"Le dimanche, beaucoup de restaurants ferment ou ne servent que le déjeuner, et les marchés sont fermés. Prévoir des en-cas la veille — vous avez 2 dimanches (19 et 26/07)."},{"lieu":null,"texte":"Drapeaux de plage : vert = baignade OK, jaune = pieds dans l'eau seulement, rouge = interdit. La côte ouest a des courants sérieux."},{"lieu":null,"texte":"Péages portugais : les autoroutes A22 ont des portiques électroniques sans barrière. Vérifier avec le loueur si la FIAT a un transpondeur, sinon éviter l'A22 via l'option « sans péage » du GPS (~10 min de plus en général)."},{"lieu":null,"texte":"Coucher de soleil mi-juillet en Algarve : ~20h55. Heure dorée dès 20h, heure bleue (souvent la plus belle) 21h-21h30."},{"lieu":"far-culatra","texte":"Culatra est une île habitée à l'année par des familles de pêcheurs — pas de voitures, l'école et l'église donnent sur le sable."},{"lieu":"shp-sbr-liege","texte":"⭐ PENDANT VOTRE SÉJOUR : la Feira da Serra de São Brás de Alportel a lieu le dernier week-end de juillet (25-26/07/2026) — grand événement avec musique live, bouffe locale et stands d'artisanat de toute la serra. Pile votre dernier week-end !"},{"lieu":"shp-lou-empreita","texte":"Le samedi matin à Loulé : marché de producteurs dans les rues du centre + grand marché forain (le 'marché gitan') en périphérie — vêtements, cuir, tissus à prix doux. Samedis 18 et 25/07 pendant le séjour."},{"lieu":"shp-tav-casa-portas","texte":"Tavira : le 3e samedi du mois (18/07 pour vous), Mercado Mensal de producteurs à l'ancienne foire de Vale Formoso."},{"lieu":"shp-olh-cubista","texte":"Le Portugal produit plus de 60% du liège mondial — et l'Algarve en est le berceau historique, autour de São Brás de Alportel."},{"lieu":"nat-salines-fuseta","texte":"Les flamants roses de la Ria Formosa se nourrissent dans les salines — leur couleur vient des micro-crevettes qu'ils filtrent. Aube et crépuscule sont leurs heures de parade."},{"lieu":"mon-medronho","texte":"Le medronho, eau-de-vie d'arbouse de la serra de Monchique, titre souvent 45° et se distille encore en alambics de cuivre familiaux — les locaux le boivent au comptoir dès le café du matin."},{"lieu":"act-bateau-solaire","texte":"La Ria Formosa est classée parmi les 7 Merveilles naturelles du Portugal : 60 km de lagune protégée par des îles-barrières, sur la route de migration entre Europe et Afrique."}],"pratique":{"essence":{"note":"Stations à Olhão (Galp/BP sur la N125), grandes stations 24h/24 sur l'A22 et autour de Faro. Le dimanche, privilégier les stations avec paiement automatique. Diesel ~1,7-1,9€/l.","verifier":true},"parkings":{"note":"Olhão : parking gratuit le long de l'Av. 5 de Outubro côté est + zones bleues centre. Tavira : parking du marché ou rive gauche. Lagos/Carvoeiro en juillet : arriver avant 10h ou après 17h.","verifier":true},"langues_cles":["Bom dia (bonjour)","Boa tarde (bon après-midi)","Obrigada (merci — au féminin pour vous deux)","A conta, por favor (l'addition svp)","Uma imperial (une pression)"],"urgences":"112 européen. Attention vols à la tire dans les zones très touristiques (plages, marchés)."},"lacunes_a_enrichir":["CLUBS/VIE NOCTURNE : corpus muet (hors bars). Vos goûts penchent bars authentiques — à confirmer si envie de club un soir.","STATUT D'OUVERTURE : tous les lieux marqués 'verifier: true' datent de sources 2019-2026 — vérification en ligne nécessaire avant le départ (certains ont pu fermer, ex. Nuno's à Fuseta déjà signalé vendu dans le corpus).","BENAGIL 2026 : les règles d'accès à la grotte évoluent chaque année (quotas, interdiction de nage certaines années) — à vérifier absolument avant de réserver.","MARÉES : intégrer la table des marées 15-27 juillet pour Olhão/Fuseta (accès îles et bancs de sable).","SHOPPING vérifié le 2026-07-02 via web (sites marchands, TripAdvisor, blogs Taste Tavira / hotels.com / boardexchange). Adresses exactes et horaires à confirmer sur place ou via un check ciblé avant visite."]};
+/* ================= MARÉ · logique ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const CATMETA={
+  base:{ic:'🏠',lab:'La base',col:'var(--c-base)'},
+  plage:{ic:'🏖️',lab:'Plages',col:'var(--c-plage)'},
+  nature:{ic:'🌿',lab:'Nature',col:'var(--c-nature)'},
+  resto:{ic:'🍽️',lab:'Restos',col:'var(--c-resto)'},
+  cafe:{ic:'☕',lab:'Cafés',col:'var(--c-cafe)'},
+  bar:{ic:'🍹',lab:'Bars',col:'var(--c-bar)'},
+  culture:{ic:'🏛️',lab:'Culture',col:'var(--c-culture)'},
+  village:{ic:'🏘️',lab:'Villages',col:'var(--c-village)'},
+  point_de_vue:{ic:'👁️',lab:'Points de vue',col:'var(--c-pdv)'},
+  shopping:{ic:'🛍️',lab:'Shopping',col:'var(--c-shopping)'},
+  activite:{ic:'🚣',lab:'Activités',col:'var(--c-activite)'},
+  vignoble:{ic:'🍇',lab:'Vignobles',col:'var(--c-vignoble)'}
+};
+const QUICKMAP={manger:['resto','cafe'],boire:['bar','cafe'],plage:['plage','nature'],pdv:['point_de_vue'],shopping:['shopping'],culture:['culture','village','vignoble','activite']};
+const TRIP={start:'2026-07-15',end:'2026-07-27'};
+const BASE=[37.0264,-7.8434];
+const esc=t=>(t||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayKey=()=>new Date().toLocaleDateString('sv-SE');
+const DAYS=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+
+let S={favs:[],pins:[],pinsDate:todayKey(),visited:{},notes:{},checks:{},chat:[],resas:{},press:{}};
+let memOnly=false, saveT=null;
+async function loadState(){
+  try{
+    if(!window.storage) throw 0;
+    const r=await window.storage.get('mare_v1');
+    if(r&&r.value) S=Object.assign(S,JSON.parse(r.value));
+  }catch(e){ if(!window.storage) memOnly=true; }
+}
+function save(){
+  clearTimeout(saveT);
+  saveT=setTimeout(async()=>{
+    if(memOnly) return;
+    try{ await window.storage.set('mare_v1',JSON.stringify(S)); }catch(e){}
+  },700);
+}
+
+let POS=null, geoDenied=false;
+function haversine(a,b){
+  const R=6371,r=Math.PI/180,dLa=(b[0]-a[0])*r,dLo=(b[1]-a[1])*r;
+  const h=Math.sin(dLa/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+const distTo=p=>haversine(POS||BASE,p.coords);
+const fmtKm=k=>k<1?Math.round(k*1000)+' m':(k<10?k.toFixed(1):Math.round(k))+' km';
+const driveMin=k=>Math.round(k<3?k*4:8+k*1.05);
+let lastRenderPos=null;
+function startGeo(){
+  if(!navigator.geolocation) return;
+  navigator.geolocation.watchPosition(p=>{
+    POS=[p.coords.latitude,p.coords.longitude];
+    updateMyMarker();
+    if(!lastRenderPos||haversine(lastRenderPos,POS)>0.15){
+      lastRenderPos=POS.slice(); refreshOpenLists(); renderMarebar();
+    }
+  },()=>{geoDenied=true;},{enableHighAccuracy:true,maximumAge:30000,timeout:15000});
+}
+
+function sunset(lat,lng,d=new Date()){
+  const rad=Math.PI/180;
+  const n=Math.ceil((d-new Date(d.getFullYear(),0,0))/864e5);
+  const t=n+((18-lng/15)/24), M=(0.9856*t)-3.289;
+  let L=(M+1.916*Math.sin(M*rad)+0.02*Math.sin(2*M*rad)+282.634+360)%360;
+  let RA=(Math.atan(0.91764*Math.tan(L*rad))/rad+360)%360;
+  RA=(RA+Math.floor(L/90)*90-Math.floor(RA/90)*90)/15;
+  const sinD=0.39782*Math.sin(L*rad), cosD=Math.cos(Math.asin(sinD));
+  const cosH=(Math.cos(90.833*rad)-sinD*Math.sin(lat*rad))/(cosD*Math.cos(lat*rad));
+  if(cosH<-1||cosH>1) return null;
+  const H=(Math.acos(cosH)/rad)/15, T=H+RA-0.06571*t-6.622;
+  let UT=(T-lng/15)%24; if(UT<0)UT+=24;
+  const loc=(UT+1)%24;
+  return {h:Math.floor(loc),m:Math.round((loc%1)*60)};
+}
+function renderMarebar(){
+  const now=new Date(), tk=todayKey();
+  let day;
+  if(tk<TRIP.start){ const d=Math.ceil((new Date(TRIP.start)-now)/864e5); day=`J−${d} avant le départ ✈️`; }
+  else if(tk>TRIP.end){ day='Souvenirs d\u2019Algarve 🐚'; }
+  else{ const n=Math.round((now-new Date(TRIP.start))/864e5)+1; day=`Jour ${n}/13 · ${DAYS[now.getDay()]}`; }
+  $('#mb-day').innerHTML='<b>'+day+'</b>';
+  const ss=sunset((POS||BASE)[0],(POS||BASE)[1]);
+  if(ss){
+    const pad=n=>String(n).padStart(2,'0');
+    let gm=ss.m-55,gh=ss.h; if(gm<0){gm+=60;gh--;}
+    $('#mb-sun').textContent=`☀️ dorée ${pad(gh)}:${pad(gm)} · coucher ${pad(ss.h)}:${pad(ss.m)}`;
+  }
+}
+
+function closedToday(p){
+  if(!p.horaires) return false;
+  const m=p.horaires.toLowerCase().match(/ferm[ée]e?s?\s+(?:le\s+)?([a-zéè-]+)/);
+  if(!m) return false;
+  return m[1].startsWith(DAYS[new Date().getDay()].slice(0,5));
+}
+function checkInfo(id){
+  const c=S.checks[id]; if(!c) return null;
+  const days=Math.floor((Date.now()-new Date(c.date))/864e5);
+  const ago=days<1?'aujourd\u2019hui':days===1?'hier':'il y a '+days+' j';
+  return {...c,ago};
+}
+
+function rowHTML(p,showDist=true){
+  const cm=CATMETA[p.cat]||CATMETA.culture;
+  const d=distTo(p);
+  const badges=[];
+  if(S.pins.includes(p.id)) badges.push('<span class="badge pin">📌</span>');
+  if(p.resa_requise) badges.push(S.resas[p.id]?'<span class="badge done">réservé ✓</span>':'<span class="badge resa">à réserver</span>');
+  if(p.tag==='incontournable') badges.push('<span class="badge inc">incontournable</span>');
+  const ci=checkInfo(p.id);
+  if(ci&&ci.statut==='ferme') badges.push('<span class="badge ferme">signalé fermé</span>');
+  else if(closedToday(p)) badges.push('<span class="badge closed">fermé aujourd\u2019hui ?</span>');
+  else if(ci&&ci.statut==='ouvert') badges.push('<span class="badge ok">vérifié '+ci.ago+'</span>');
+  const fav=S.favs.includes(p.id)?' ⭐':'';
+  return `<button class="place-row" data-open="${p.id}">
+    <span class="dot" style="background:${cm.col}"></span>
+    <span class="pr-main">
+      <span class="pr-name">${esc(p.nom)}${fav} ${badges.join(' ')}</span>
+      <span class="pr-sub">${cm.ic} ${esc(p.sous_cat||cm.lab)}</span>
+    </span>
+    ${showDist?`<span class="pr-dist">${fmtKm(d)}<small>~${driveMin(d)} min 🚗</small></span>`:''}
+  </button>`;
+}
+function renderList(items,el,empty){
+  el.innerHTML=items.length?'<div class="card">'+items.map(p=>rowHTML(p)).join('')+'</div>'
+    :`<div class="card"><div class="empty">${empty||'Rien par ici pour l\u2019instant.'}</div></div>`;
+}
+
+let activeQuick=null;
+function renderIci(){
+  renderDayHero();
+  const db=$('#daybanner');
+  if(S.pinsDate!==todayKey()&&S.pins.length){
+    db.innerHTML=`<div class="daybanner">📌 ${S.pins.length} épingle(s) d\u2019un autre jour —
+      <button id="keep-pins">garder</button> · <button id="clear-pins">nouvelle journée</button></div>`;
+    $('#keep-pins').onclick=()=>{S.pinsDate=todayKey();save();renderIci();};
+    $('#clear-pins').onclick=()=>{S.pins=[];S.pinsDate=todayKey();save();renderIci();toast('Épingles remises à zéro — belle journée !');};
+  } else db.innerHTML='';
+  const pb=$('#pinblock');
+  const pins=S.pins.map(id=>DB.lieux.find(l=>l.id===id)).filter(Boolean);
+  pb.innerHTML=pins.length?`<h2 class="sec">📌 Ma journée <span class="n">${pins.length}</span></h2>
+    <div class="card pinstrip">${pins.map(p=>rowHTML(p)).join('')}</div>`:'';
+  renderQuickList(); renderFact();
+}
+function renderQuickList(){
+  const el=$('#quicklist');
+  if(!activeQuick){el.innerHTML='';return;}
+  const cats=QUICKMAP[activeQuick];
+  let items=DB.lieux.filter(p=>cats.includes(p.cat)&&p.cat!=='base');
+  items.sort((a,b)=>distTo(a)-distTo(b));
+  const open=items.filter(p=>!closedToday(p)&&(checkInfo(p.id)||{}).statut!=='ferme');
+  const rest=items.filter(p=>!open.includes(p));
+  el.innerHTML=`<h2 class="sec">${{manger:'🍽️ Manger',boire:'🍹 Boire un verre',plage:'🏖️ Plage & balade',pdv:'👁️ Points de vue',shopping:'🛍️ Shopping',culture:'🏛️ Culture & villages'}[activeQuick]}
+    <span class="n">${items.length}</span></h2>
+    <div class="card">${[...open.slice(0,12),...rest.slice(0,3)].map(p=>rowHTML(p)).join('')}</div>`;
+}
+let factIdx=0;
+function renderFact(){
+  const near=DB.facts.filter(f=>{
+    if(!f.lieu) return true;
+    const p=DB.lieux.find(l=>l.id===f.lieu);
+    return p&&distTo(p)<25;
+  });
+  const pool=near.length?near:DB.facts;
+  const f=pool[(new Date().getDate()+factIdx)%pool.length];
+  const p=f.lieu?DB.lieux.find(l=>l.id===f.lieu):null;
+  $('#factcard').innerHTML=`<span class="f-tag">Le saviez-vous ${p?'· '+esc(p.nom):''}</span>${esc(f.texte)}
+    <div style="text-align:right;margin-top:6px"><button style="font-size:.72rem;text-decoration:underline;opacity:.8" id="nextfact">un autre ↻</button></div>`;
+  $('#nextfact').onclick=()=>{factIdx++;renderFact();};
+}
+
+function unreserved(){
+  return DB.lieux.filter(p=>p.resa_requise&&!S.resas[p.id]&&!S.visited[p.id]);
+}
+function renderDayHero(){
+  const hour=new Date().getHours();
+  const evening=hour>=17;
+  const un=unreserved();
+  $('#dayhero').innerHTML=`<div class="dayhero">
+    <div class="dh-t">${evening?'🌙 On prépare demain ?':'🌅 Une idée pour aujourd\u2019hui ?'}</div>
+    <div class="dh-s">Maré croise météo, marées, fermetures du jour et vos envies — et vous propose 2-3 pistes, jamais un programme.</div>
+    <div class="dh-btns">
+      <button id="dh-today">🌅 Ma journée ?</button>
+      <button id="dh-tmrw">🌙 Et demain ?</button>
+    </div>
+    ${un.length?`<div class="radar"><b>📞 Radar résa</b> — pas encore réservé :<br>
+      ${un.map(p=>`<button class="r-item" data-open="${p.id}">${esc(p.nom)}</button>`).join('')}</div>`:''}
+  </div>`;
+  $('#dh-today').onclick=()=>askDay('today');
+  $('#dh-tmrw').onclick=()=>askDay('tomorrow');
+}
+function askDay(mode){
+  if(!navigator.onLine){toast('Il faut du réseau pour la suggestion du jour — le reste de l\u2019app fonctionne !');return;}
+  const now=new Date();
+  const target=mode==='today'?now:new Date(now.getTime()+864e5);
+  const dayN=DAYS[target.getDay()], dateS=target.toLocaleDateString('fr-BE');
+  const un=unreserved().map(p=>p.nom).join(', ')||'rien';
+  const prompt=`BRIEF DU ${mode==='today'?'JOUR':'LENDEMAIN'} — ${dayN} ${dateS}${mode==='today'?' (il est '+now.toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'})+')':''}.
+Fais des recherches web pour : la météo de ${mode==='today'?'aujourd\u2019hui':'demain'} en Algarve (Olhão + côte ouest, vent inclus) et les horaires de marée à Olhão.
+Puis propose 2-3 pistes CONTRASTÉES (ex: une grosse virée, une option douce, un plan tout près), en tenant compte des fermetures du ${dayN}, de ce qui est déjà visité/épinglé, de la position, et de la météo/marée trouvées. Chaque piste : 2-3 lignes max, lieux marqués [id:xxx].
+Termine par « 📞 Radar résa » : parmi [${un}] + les activités des pistes proposées, dis ce qu'il faudrait réserver aujourd'hui pour les 3 prochains jours (Benagil s'anticipe de 2-3 jours en juillet, Noélia de plusieurs semaines, dauphins/bateaux la veille). Bref et actionnable.`;
+  switchView('chat');
+  sendChat(prompt, mode==='today'?'🌅 Ma journée ?':'🌙 Et demain ?');
+}
+
+function openUtil(kind){
+  const c=POS||BASE;
+  const q=kind==='essence'?'station+essence':'parking';
+  const tips=kind==='essence'?DB.pratique.essence.note:DB.pratique.parkings.note;
+  openCustomSheet(`
+    <span class="sh-cat" style="background:var(--lagoon)">${kind==='essence'?'⛽ Essence':'🅿️ Parking'} · autour de moi</span>
+    <h3>${kind==='essence'?'Faire le plein':'Se garer'}</h3>
+    <p class="sh-desc">Recherche en direct autour de ta position — Google/Apple Maps ont l\u2019info temps réel (ouvert/fermé, places).</p>
+    <div class="sh-tip">💡 ${esc(tips)}</div>
+    <div class="acts">
+      <a class="go" target="_blank" rel="noopener" href="https://www.google.com/maps/search/${q}/@${c[0]},${c[1]},14z">Ouvrir dans Google Maps</a>
+      <a target="_blank" rel="noopener" href="https://maps.apple.com/?q=${q.replace('+','%20')}&sll=${c[0]},${c[1]}&z=14">Apple Plans</a>
+      <a target="_blank" rel="noopener" href="https://waze.com/ul?q=${q}&ll=${c[0]},${c[1]}">Waze</a>
+    </div>`);
+}
+
+let MAP=null,layerG=null,myMarker=null,mapFilter=new Set(Object.keys(CATMETA));
+function bgBounds(){
+  const lats=DB.lieux.map(p=>p.coords[0]), lons=DB.lieux.map(p=>p.coords[1]);
+  const pad=0.06;
+  return [[Math.min(...lats)-pad, Math.min(...lons)-pad],[Math.max(...lats)+pad, Math.max(...lons)+pad]];
+}
+function bgSvgDataUri(){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#DDEAE8"/>
+        <stop offset="55%" stop-color="#EDE6D6"/>
+        <stop offset="100%" stop-color="#F4EDE0"/>
+      </linearGradient>
+      <pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">
+        <circle cx="1.6" cy="1.6" r="1.1" fill="#BFDCD6" opacity="0.55"/>
+      </pattern>
+    </defs>
+    <rect width="400" height="300" fill="url(#bg)"/>
+    <rect width="400" height="300" fill="url(#dots)"/>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,'+encodeURIComponent(svg);
+}
+function initMap(){
+  if(MAP) return;
+  MAP=L.map('map',{zoomControl:false,minZoom:8,maxZoom:16}).setView(BASE,10);
+  const bounds=bgBounds();
+  L.imageOverlay(bgSvgDataUri(),bounds,{opacity:1}).addTo(MAP);
+  MAP.fitBounds(bounds);
+  const legend=L.control({position:'bottomleft'});
+  legend.onAdd=function(){
+    const div=L.DomUtil.create('div');
+    div.style.cssText='background:rgba(253,250,243,.88);padding:4px 9px;border-radius:8px;font-size:.62rem;color:#66787A;box-shadow:0 2px 8px rgba(18,51,58,.12)';
+    div.textContent='Carte stylisée · positions GPS précises';
+    return div;
+  };
+  legend.addTo(MAP);
+  layerG=L.layerGroup().addTo(MAP);
+  renderMarkers(); updateMyMarker();
+  $('#locbtn').onclick=()=>{ if(POS) MAP.setView(POS,13); else toast(geoDenied?'Position refusée — active la localisation dans Réglages':'Recherche de ta position…'); };
+}
+function pinIcon(p){
+  const cm=CATMETA[p.cat]||CATMETA.culture;
+  const home=p.cat==='base'?' home':'';
+  return L.divIcon({html:`<div class="pin${home}" style="background:${cm.col}"><span>${cm.ic}</span></div>`,iconSize:[26,26],iconAnchor:[13,24]});
+}
+function renderMarkers(){
+  if(!layerG) return;
+  layerG.clearLayers();
+  DB.lieux.filter(p=>mapFilter.has(p.cat)).forEach(p=>{
+    L.marker(p.coords,{icon:pinIcon(p)}).addTo(layerG).on('click',()=>openSheet(p.id));
+  });
+}
+function updateMyMarker(){
+  if(!MAP||!POS) return;
+  if(!myMarker){ myMarker=L.marker(POS,{icon:L.divIcon({html:'<div class="mylo"></div>',iconSize:[16,16],iconAnchor:[8,8]}),zIndexOffset:900}).addTo(MAP); }
+  else myMarker.setLatLng(POS);
+}
+function renderMapChips(){
+  const el=$('#mapchips');
+  el.innerHTML='<button class="chip on" data-c="all">Tout</button>'+Object.entries(CATMETA)
+    .filter(([k])=>k!=='base')
+    .map(([k,v])=>`<button class="chip on" data-c="${k}">${v.ic} ${v.lab}</button>`).join('');
+  el.onclick=e=>{
+    const b=e.target.closest('.chip'); if(!b) return;
+    if(b.dataset.c==='all'){ const on=!b.classList.contains('on');
+      $$('#mapchips .chip').forEach(c=>c.classList.toggle('on',on));
+      mapFilter=on?new Set(Object.keys(CATMETA)):new Set(['base']);
+    } else {
+      b.classList.toggle('on');
+      b.classList.contains('on')?mapFilter.add(b.dataset.c):mapFilter.delete(b.dataset.c);
+    }
+    renderMarkers();
+  };
+}
+function renderExplorer(){
+  const g=$('#grappes');
+  $('#gcount').textContent=DB.grappes.length;
+  g.innerHTML=DB.grappes.map(gr=>{
+    const n=DB.lieux.filter(p=>p.grappe===gr.id).length;
+    return `<button class="gcard" data-g="${gr.id}">
+      <span class="g-z">${esc(gr.zone)}</span><span class="g-n">${esc(gr.nom)}</span>
+      <span class="g-c">${n} lieux · ${esc(gr.note.split('.')[0])}</span></button>`;
+  }).join('');
+  g.onclick=e=>{const b=e.target.closest('.gcard'); if(b) showGrappe(b.dataset.g);};
+  const cg=$('#catgrid');
+  cg.innerHTML=Object.entries(CATMETA).filter(([k])=>k!=='base').map(([k,v])=>{
+    const n=DB.lieux.filter(p=>p.cat===k).length;
+    return `<button data-cat="${k}"><span class="ci" style="background:${v.col}">${v.ic}</span>${v.lab}<small style="color:var(--muted)">${n}</small></button>`;
+  }).join('');
+  cg.onclick=e=>{const b=e.target.closest('[data-cat]'); if(b) showCat(b.dataset.cat);};
+  const incs=DB.lieux.filter(p=>p.tag==='incontournable'&&p.cat!=='base').sort((a,b)=>distTo(a)-distTo(b));
+  $('#inccount').textContent=incs.length;
+  $('#inclist').innerHTML=incs.map(p=>rowHTML(p)).join('');
+}
+function showGrappe(id){
+  const gr=DB.grappes.find(x=>x.id===id);
+  const items=DB.lieux.filter(p=>p.grappe===id).sort((a,b)=>(a.tag==='incontournable'?0:1)-(b.tag==='incontournable'?0:1));
+  $('#explist').innerHTML=`<h2 class="sec">${esc(gr.nom)} <span class="n">${items.length}</span></h2>
+    <p style="font-size:.85rem;color:var(--muted);margin:-4px 2px 10px">${esc(gr.note)}</p>
+    <div class="card">${items.map(p=>rowHTML(p)).join('')}</div>`;
+  $('#explist').scrollIntoView({behavior:'smooth'});
+}
+function showCat(cat){
+  const items=DB.lieux.filter(p=>p.cat===cat).sort((a,b)=>distTo(a)-distTo(b));
+  $('#explist').innerHTML=`<h2 class="sec">${CATMETA[cat].ic} ${CATMETA[cat].lab} <span class="n">${items.length}</span></h2>
+    <div class="card">${items.map(p=>rowHTML(p)).join('')}</div>`;
+  $('#explist').scrollIntoView({behavior:'smooth'});
+}
+function bindSearch(){
+  $('#searchin').addEventListener('input',e=>{
+    const q=e.target.value.trim().toLowerCase();
+    const el=$('#searchres');
+    if(q.length<2){el.innerHTML='';return;}
+    const items=DB.lieux.filter(p=>(p.nom+' '+(p.desc||'')+' '+(p.sous_cat||'')+' '+(p.conseil||'')).toLowerCase().includes(q)).slice(0,10);
+    renderList(items,el,'Rien trouvé — essaie le Chat, il cherchera plus loin.');
+  });
+}
+
+let sheetOpen=false;
+function openCustomSheet(html){
+  $('#sheet').innerHTML='<div class="grip"></div>'+html;
+  $('#sheet').classList.add('open');$('#veil').classList.add('open');sheetOpen=true;
+}
+function closeSheet(){$('#sheet').classList.remove('open');$('#veil').classList.remove('open');sheetOpen=false;}
+function openSheet(id){
+  const p=DB.lieux.find(l=>l.id===id); if(!p) return;
+  const cm=CATMETA[p.cat], gr=DB.grappes.find(g=>g.id===p.grappe);
+  const d=distTo(p), fav=S.favs.includes(id), pin=S.pins.includes(id);
+  const v=S.visited[id], ci=checkInfo(id);
+  const fact=DB.facts.find(f=>f.lieu===id);
+  const meta=[];
+  if(p.adresse) meta.push('<b>📍</b> '+esc(p.adresse));
+  if(p.horaires) meta.push('<b>🕐</b> '+esc(p.horaires));
+  if(p.prix) meta.push('<b>💶</b> '+esc(p.prix));
+  if(p.tel) meta.push('<b>📞</b> <a href="tel:'+p.tel.replace(/\s/g,'')+'">'+esc(p.tel)+'</a>');
+  if(p.site) meta.push('<b>🌐</b> <a target="_blank" rel="noopener" href="https://'+esc(p.site)+'">'+esc(p.site)+'</a>');
+  const badges=[];
+  if(p.tag==='incontournable') badges.push('<span class="badge inc">incontournable</span>');
+  if(p.tag==='plan_b') badges.push('<span class="badge" style="background:var(--lagoon-mist);color:var(--lagoon)">plan B</span>');
+  if(p.resa_requise) badges.push('<span class="badge resa">réservation conseillée</span>');
+  if(p.maree_sensible) badges.push('<span class="badge resa">🌊 sensible aux marées</span>');
+  if(closedToday(p)) badges.push('<span class="badge closed">fermé aujourd\u2019hui ?</span>');
+  if(ci) badges.push(ci.statut==='ferme'?'<span class="badge ferme">signalé fermé</span>'
+    :ci.statut==='ouvert'?'<span class="badge ok">✓ vérifié '+ci.ago+'</span>'
+    :'<span class="badge closed">statut incertain</span>');
+  const gq=encodeURIComponent(p.nom+' '+(gr?gr.nom.replace(/Le coin de |— .*/g,''):'Algarve'));
+  openCustomSheet(`
+    <span class="sh-cat" style="background:${cm.col}">${cm.ic} ${esc(p.sous_cat||cm.lab)}</span>
+    <h3>${esc(p.nom)}</h3>
+    <div class="sh-sub">${gr?esc(gr.nom):''} · ${fmtKm(d)} (~${driveMin(d)} min en voiture)</div>
+    <div class="sh-badges">${badges.join('')}</div>
+    <p class="sh-desc">${esc(p.desc)}</p>
+    ${p.conseil?`<div class="sh-tip"><b>💡 Le conseil :</b> ${esc(p.conseil)}</div>`:''}
+    ${fact?`<div class="sh-fact">✺ ${esc(fact.texte)}</div>`:''}
+    ${meta.length?`<div class="sh-meta">${meta.join('<br>')}</div>`:''}
+    ${ci&&ci.resume?`<div class="sh-check"><b>Dernière vérif (${ci.ago}) :</b> ${esc(ci.resume)}</div>`:''}
+    <div class="acts">
+      <button class="go" id="a-go">🧭 Y aller</button>
+      <div class="gomenu" id="gomenu">
+        <a target="_blank" rel="noopener" href="https://waze.com/ul?ll=${p.coords[0]},${p.coords[1]}&navigate=yes">Waze</a>
+        <a target="_blank" rel="noopener" href="https://maps.apple.com/?daddr=${p.coords[0]},${p.coords[1]}">Plans</a>
+        <a target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${p.coords[0]},${p.coords[1]}">G. Maps</a>
+      </div>
+      <button id="a-fav" class="${fav?'on':''}">${fav?'⭐ En favori':'☆ Favori'}</button>
+      <button id="a-pin" class="${pin?'on':''}">${pin?'📌 Épinglé aujourd\u2019hui':'📌 Ma journée'}</button>
+      <button id="a-check">🔄 Vérifier en ligne</button>
+      <a target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${gq}">💬 Avis Google</a>
+      <button id="a-press">📰 Articles récents</button>
+      ${p.resa_requise?`<button id="a-resa" class="${S.resas[id]?'on':''}" style="grid-column:1/-1">${S.resas[id]?'✅ Réservé — c\u2019est calé !':'📞 Marquer comme réservé'}</button>`:''}
+      <button id="a-visit" class="${v?'on':''}" style="grid-column:1/-1">${v?'✓ Visité le '+v.date+' — modifier':'✓ On y est allées !'}</button>
+    </div>
+    <div class="presszone" id="presszone"></div>
+    <div id="visitzone"></div>
+    <div class="notebox"><label for="pnote">Note perso</label>
+      <textarea id="pnote" placeholder="Terrasse au fond, patron adorable, à refaire avec les amis…">${esc(S.notes[id]||'')}</textarea>
+    </div>`);
+  $('#a-go').onclick=()=>$('#gomenu').classList.toggle('open');
+  $('#a-fav').onclick=()=>{toggleIn(S.favs,id);save();openSheet(id);refreshOpenLists();};
+  $('#a-pin').onclick=()=>{
+    if(!S.pins.includes(id)&&S.pinsDate!==todayKey()){S.pins=[];S.pinsDate=todayKey();}
+    toggleIn(S.pins,id);S.pinsDate=todayKey();save();openSheet(id);renderIci();
+    toast(S.pins.includes(id)?'Épinglé pour aujourd\u2019hui 📌':'Épingle retirée');
+  };
+  $('#a-check').onclick=()=>verifyPlace(p);
+  renderPress(id);
+  $('#a-press').onclick=()=>fetchPress(p);
+  const ar=$('#a-resa');
+  if(ar) ar.onclick=()=>{S.resas[id]=!S.resas[id];if(!S.resas[id])delete S.resas[id];save();openSheet(id);renderIci();
+    toast(S.resas[id]?'Noté : réservé ✅':'Remis dans le radar résa');};
+  $('#a-visit').onclick=()=>visitFlow(p);
+  $('#pnote').addEventListener('change',e=>{S.notes[id]=e.target.value.trim();save();toast('Note enregistrée ✎');});
+  if(v) visitFlow(p,true);
+}
+function toggleIn(arr,id){const i=arr.indexOf(id); i>=0?arr.splice(i,1):arr.push(id);}
+function visitFlow(p,silent){
+  const v=S.visited[p.id]||{};
+  $('#visitzone').innerHTML=`<div class="ratebar">
+    ${['🤍 Adoré','👍 Bien','😐 Bof'].map((l,i)=>`<button data-r="${i}" class="${v.rating===i?'on':''}">${l}</button>`).join('')}
+    ${v.date?'<button data-r="del" style="flex:0 0 auto;border-color:var(--warn);color:var(--warn)">✕</button>':''}
+  </div>`;
+  $('#visitzone').onclick=e=>{
+    const b=e.target.closest('[data-r]'); if(!b) return;
+    if(b.dataset.r==='del'){delete S.visited[p.id];save();openSheet(p.id);toast('Retiré du journal');return;}
+    S.visited[p.id]={date:todayKey(),rating:+b.dataset.r};save();
+    visitFlow(p,true); toast('Ajouté au journal 📓');
+    $('#a-visit').textContent='✓ Visité le '+todayKey()+' — modifier';$('#a-visit').classList.add('on');
+  };
+  if(!silent) $('#visitzone').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function verifyPlace(p){
+  if(!navigator.onLine){toast('Hors ligne — vérification impossible pour le moment');return;}
+  const btn=$('#a-check'); btn.innerHTML='<span class="spin dark"></span> Vérification…'; btn.disabled=true;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:
+`Vérifie via recherche web l'état actuel (juillet 2026) de ce lieu en Algarve, Portugal :
+"${p.nom}"${p.adresse?', '+p.adresse:''} (${(DB.grappes.find(g=>g.id===p.grappe)||{}).nom||'Algarve'}).
+Cherche : est-il toujours ouvert / définitivement fermé ? Jours et horaires actuels ? Que disent les avis récents (1 phrase) ?
+Réponds UNIQUEMENT avec un objet JSON, sans texte autour, sans backticks :
+{"statut":"ouvert"|"ferme"|"incertain","resume":"synthèse en 1-2 phrases en français","horaires":"horaires actuels ou vide"}`}]})});
+    const data=await r.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    const m=txt.match(/\{[\s\S]*\}/);
+    if(!m) throw new Error('réponse illisible');
+    const res=JSON.parse(m[0].replace(/```json|```/g,''));
+    S.checks[p.id]={date:new Date().toISOString(),statut:res.statut||'incertain',resume:res.resume||'',horaires:res.horaires||''};
+    if(res.horaires) p.horaires=res.horaires;
+    save(); openSheet(p.id); refreshOpenLists();
+    toast(res.statut==='ouvert'?'✓ Toujours ouvert':res.statut==='ferme'?'⚠️ Signalé fermé !':'Statut incertain — prudence');
+  }catch(e){ btn.disabled=false; btn.textContent='🔄 Vérifier en ligne'; toast('Vérification impossible — réessaie en 4G'); }
+}
+
+function renderPress(id){
+  const pr=S.press[id]; const el=$('#presszone'); if(!el) return;
+  if(!pr||!pr.links.length){el.innerHTML='';return;}
+  const days=Math.floor((Date.now()-new Date(pr.date))/864e5);
+  el.innerHTML='<label style="font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)">📰 On en parle (trouvé '+(days<1?'aujourd\u2019hui':'il y a '+days+' j')+')</label>'+
+    pr.links.map(l=>`<a target="_blank" rel="noopener" href="${esc(l.url)}">${esc(l.titre)}<small>${esc(l.source||'')}</small></a>`).join('');
+}
+async function fetchPress(p){
+  if(!navigator.onLine){toast('Hors ligne — recherche impossible pour le moment');return;}
+  const btn=$('#a-press'); btn.innerHTML='<span class="spin dark"></span> Recherche…'; btn.disabled=true;
+  try{
+    const zone=(DB.grappes.find(g=>g.id===p.grappe)||{}).nom||'Algarve';
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:
+`Cherche sur le web 1 à 3 articles ou billets de blog RÉCENTS (2024-2026, hors TripAdvisor/Google) qui parlent de "${p.nom}" (${zone}, Algarve, Portugal). Blogs voyage, presse, guides locaux.
+Réponds UNIQUEMENT en JSON, sans texte autour : {"links":[{"titre":"…","source":"nom du site","url":"URL EXACTE trouvée dans les résultats"}]}
+IMPORTANT : uniquement des URLs réellement présentes dans tes résultats de recherche — jamais d'URL inventée ou reconstruite. Si rien de pertinent : {"links":[]}`}]})});
+    const data=await r.json();
+    const txt=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n');
+    const m=txt.match(/\{[\s\S]*\}/); if(!m) throw 0;
+    const res=JSON.parse(m[0].replace(/```json|```/g,''));
+    S.press[p.id]={date:new Date().toISOString(),links:(res.links||[]).slice(0,3)};
+    save(); renderPress(p.id);
+    btn.disabled=false; btn.textContent='📰 Articles récents';
+    toast(S.press[p.id].links.length?'Articles trouvés 📰':'Rien de récent trouvé sur ce lieu');
+  }catch(e){btn.disabled=false;btn.textContent='📰 Articles récents';toast('Recherche impossible — réessaie en 4G');}
+}
+
+function compactDB(){
+  return DB.lieux.filter(p=>p.cat!=='base').map(p=>{
+    const f=[]; if(p.resa_requise)f.push('résa'); if(p.maree_sensible)f.push('marée');
+    const cl=(p.horaires||'').match(/ferm[ée]e?s?\s+(?:le\s+)?([a-zéè-]+)/i); if(cl)f.push('fermé:'+cl[1]);
+    const ci=S.checks[p.id]; if(ci)f.push('vérif:'+ci.statut);
+    return `${p.id}|${p.nom}|${p.cat}${p.sous_cat?'/'+p.sous_cat:''}|${(DB.grappes.find(g=>g.id===p.grappe)||{}).nom||''}|${p.tag}${f.length?'|'+f.join(','):''}`;
+  }).join('\n');
+}
+function chatContext(){
+  const now=new Date();
+  const pins=S.pins.map(id=>(DB.lieux.find(l=>l.id===id)||{}).nom).filter(Boolean);
+  const vis=Object.keys(S.visited).map(id=>(DB.lieux.find(l=>l.id===id)||{}).nom).filter(Boolean);
+  return `CONTEXTE LIVE — ${DAYS[now.getDay()]} ${now.toLocaleDateString('fr-BE')} ${now.toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'})}
+Position: ${POS?POS[0].toFixed(4)+','+POS[1].toFixed(4)+' (distances calculées depuis là)':'inconnue — base Olhão par défaut'}
+Épinglé aujourd'hui: ${pins.join(', ')||'rien'}
+Déjà visité: ${vis.slice(-12).join(', ')||'rien encore'}
+Favoris: ${S.favs.length}`;
+}
+const SYSPROMPT=()=>`Tu es Maré, le compagnon de voyage intégré à l'app de Sophie et Marine pour leur séjour en Algarve (base : Pure Formosa Concept Hotel, Olhão, du 15 au 27 juillet 2026, Fiat 500, amis à Carvoeiro pour des activités en journée).
+LEURS GOÛTS (à appliquer toujours, sans les réciter) : authentique, anti-foule, bonne cuisine locale, nature, culture, budget modéré. Elles détestent les programmes imposés.
+RÈGLES :
+- Réponds en français, ton chaleureux et direct, concis (mobile).
+- Propose 2-3 options MAX, jamais un planning imposé. Toujours tirées de la BASE ci-dessous en priorité ; si rien ne convient, dis-le et utilise la recherche web.
+- Quand tu cites un lieu de la base, marque-le [id:SON_ID] juste après son nom (l'app en fait un bouton).
+- Tiens compte : heure, jour (fermetures !), position, distances (règle : max ~2×2h de route/jour), marées pour les îles, ce qui est déjà épinglé/visité.
+- Utilise la recherche web pour : vérifier une ouverture, trouver prix/réservation d'activités, avis récents, événements du moment. Cite tes sources brièvement.
+- Jamais de foule inutile : privilégie l'est (Sotavento) et les heures creuses.
+BASE (id|nom|cat|grappe|tag|flags) :
+${compactDB()}
+${chatContext()}`;
+function pushMsg(role,txt,label){
+  S.chat.push(label?{role,content:txt,label}:{role,content:txt});
+  if(S.chat.length>12) S.chat=S.chat.slice(-12);
+  save();
+}
+function renderChat(){
+  const el=$('#msgs');
+  el.innerHTML=S.chat.length?S.chat.map(m=>{
+    if(m.role==='user') return `<div class="msg user">${esc(m.label||m.content)}</div>`;
+    return `<div class="msg bot">${fmtBot(m.content)}</div>`;
+  }).join(''):`<div class="msg bot">Olá ! Dis-moi une envie, une contrainte, une heure — je pioche dans votre base de ${DB.lieux.length-1} lieux et je vérifie en ligne si besoin. 🌊</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+function fmtBot(t){
+  let h=esc(t);
+  h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  h=h.replace(/\[id:([a-z0-9-]+)\]/g,(_,id)=>{
+    const p=DB.lieux.find(l=>l.id===id);
+    return p?`<button class="chip-place" data-open="${id}">${esc(p.nom)} ↗</button>`:'';
+  });
+  return h;
+}
+async function sendChat(txt,label){
+  txt=(txt||$('#chatin').value).trim(); if(!txt) return;
+  if(!navigator.onLine){toast('Hors ligne — le chat a besoin de réseau');return;}
+  $('#chatin').value=''; pushMsg('user',txt,label); renderChat();
+  const el=$('#msgs');
+  el.insertAdjacentHTML('beforeend','<div class="msg think" id="thinking"><span class="spin dark"></span> Maré réfléchit…</div>');
+  el.scrollTop=el.scrollHeight;
+  $('#chatsend').disabled=true;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
+        system:SYSPROMPT(),
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:S.chat.map(m=>({role:m.role,content:m.content}))})});
+    const data=await r.json();
+    if(data.error) throw new Error(data.error.message||'API');
+    const txtOut=(data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n').trim();
+    pushMsg('assistant',txtOut||'(pas de réponse — réessaie)');
+  }catch(e){ pushMsg('assistant','⚠️ Je n\u2019arrive pas à répondre (réseau ou service indisponible). Réessaie dans un instant.'); }
+  $('#chatsend').disabled=false; renderChat();
+}
+
+function renderCarnet(){
+  const favs=S.favs.map(id=>DB.lieux.find(l=>l.id===id)).filter(Boolean);
+  $('#favcount').textContent=favs.length;
+  $('#favlist').innerHTML=favs.length?favs.map(p=>rowHTML(p)).join(''):'<div class="empty">Touche ☆ sur une fiche pour garder un lieu sous la main.</div>';
+  const vis=Object.entries(S.visited).map(([id,v])=>({p:DB.lieux.find(l=>l.id===id),v})).filter(x=>x.p)
+    .sort((a,b)=>b.v.date.localeCompare(a.v.date));
+  $('#viscount').textContent=vis.length;
+  $('#vislist').innerHTML=vis.length?vis.map(({p,v})=>`
+    <button class="jentry" data-open="${p.id}" style="width:100%;text-align:left">
+      <span class="je-emo">${['🤍','👍','😐'][v.rating]??'✓'}</span>
+      <span><span class="je-d">${v.date}</span><br><span class="je-n">${esc(p.nom)}</span>
+      ${S.notes[p.id]?`<div class="je-note">« ${esc(S.notes[p.id])} »</div>`:''}</span>
+    </button>`).join(''):'<div class="empty">Le journal se remplira tout seul — marque les lieux « visités » au fil des jours.</div>';
+  const resas=DB.lieux.filter(p=>p.resa_requise).sort((a,b)=>(S.resas[a.id]?1:0)-(S.resas[b.id]?1:0));
+  $('#resalist').innerHTML=resas.map(p=>rowHTML(p)).join('');
+  $('#infos').innerHTML=`
+    ${acc('⛽ Essence & péages',esc(DB.pratique.essence.note)+'<br><br>'+esc(DB.facts.find(f=>f.texte.includes('Péages')).texte))}
+    ${acc('🅿️ Parkings',esc(DB.pratique.parkings.note))}
+    ${acc('🌊 Marées & îles','L\u2019accès aux bancs de sable (Fuseta, Cacela) et le charme des îles dépendent de la marée. <a target="_blank" rel="noopener" href="https://tabuademares.com/pt/faro/olhao">Table des marées Olhão ↗</a> — à consulter la veille pour viser la marée basse.')}
+    ${acc('🗣️ Petites phrases',DB.pratique.langues_cles.map(esc).join('<br>'))}
+    ${acc('🚨 Urgences & sécurité',esc(DB.pratique.urgences))}
+    ${acc('📅 Le piège du dimanche',esc(DB.facts.find(f=>f.texte.includes('dimanche')).texte))}
+    ${acc('🚩 Drapeaux de plage',esc(DB.facts.find(f=>f.texte.includes('Drapeaux')).texte))}
+    ${memOnly?acc('⚠️ Mode aperçu','Stockage indisponible ici : favoris et notes ne survivront pas à la fermeture. Une fois l\u2019app publiée et ouverte via son lien, tout est sauvegardé automatiquement.'):''}
+  `;
+}
+const acc=(t,b)=>`<details class="acc"><summary>${t}</summary><div class="acc-b">${b}</div></details>`;
+
+function refreshOpenLists(){
+  renderIci();
+  if($('#v-explorer').classList.contains('active')) renderExplorer();
+  if($('#v-carnet').classList.contains('active')) renderCarnet();
+}
+function switchView(v){
+  $$('.view').forEach(x=>x.classList.remove('active'));
+  $('#v-'+v).classList.add('active');
+  $$('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  if(v==='carte'){initMap();setTimeout(()=>MAP.invalidateSize(),80);}
+  if(v==='explorer') renderExplorer();
+  if(v==='carnet') renderCarnet();
+  if(v==='chat'){renderChat();}
+  window.scrollTo({top:0});
+}
+document.addEventListener('click',e=>{
+  const o=e.target.closest('[data-open]');
+  if(o){openSheet(o.dataset.open);return;}
+});
+function bindUI(){
+  $$('nav.tabs button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
+  $('#veil').onclick=closeSheet;
+  $$('.quick [data-q]').forEach(b=>b.onclick=()=>{activeQuick=b.dataset.q;renderQuickList();
+    setTimeout(()=>$('#quicklist').scrollIntoView({behavior:'smooth',block:'start'}),60);});
+  $$('.quick [data-u]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.u==='chat') switchView('chat'); else openUtil(b.dataset.u);
+  });
+  $('#chatsend').onclick=()=>sendChat();
+  $('#chatin').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}});
+  $('#sugg').onclick=e=>{const b=e.target.closest('button'); if(b) sendChat(b.textContent);};
+  window.addEventListener('online',()=>$('#offdot').classList.remove('show'));
+  window.addEventListener('offline',()=>$('#offdot').classList.add('show'));
+  if(!navigator.onLine)$('#offdot').classList.add('show');
+}
+let toastT=null;
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');
+  clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2600);}
+
+(async function init(){
+  await loadState();
+  bindUI(); bindSearch();
+  renderMarebar(); renderIci(); renderMapChips();
+  startGeo();
+  setInterval(renderMarebar,60000);
+})();
+
+</script>
+</body></html>
