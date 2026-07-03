@@ -601,18 +601,8 @@ function bgSvgDataUri(){
 }
 function initMap(){
   if(MAP) return;
-  MAP=L.map('map',{zoomControl:false,minZoom:8,maxZoom:16}).setView(BASE,10);
-  const bounds=bgBounds();
-  L.imageOverlay(bgSvgDataUri(),bounds,{opacity:1}).addTo(MAP);
-  MAP.fitBounds(bounds);
-  const legend=L.control({position:'bottomleft'});
-  legend.onAdd=function(){
-    const div=L.DomUtil.create('div');
-    div.style.cssText='background:rgba(253,250,243,.88);padding:4px 9px;border-radius:8px;font-size:.62rem;color:#66787A;box-shadow:0 2px 8px rgba(18,51,58,.12)';
-    div.textContent='Carte stylisée · positions GPS précises';
-    return div;
-  };
-  legend.addTo(MAP);
+  MAP=L.map('map',{zoomControl:false}).setView(BASE,10);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abc',attribution:'© OpenStreetMap contributors'}).addTo(MAP);
   layerG=L.layerGroup().addTo(MAP);
   renderMarkers(); updateMyMarker();
   $('#locbtn').onclick=()=>{ if(POS) MAP.setView(POS,13); else toast(geoDenied?'Position refusée — active la localisation dans Réglages':'Recherche de ta position…'); };
